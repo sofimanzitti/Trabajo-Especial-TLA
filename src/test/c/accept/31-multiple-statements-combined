@@ -1,0 +1,18 @@
+ingredient Harina in grams
+ingredient Manteca in grams
+ingredient Huevo in units
+
+recipe TortaDeManzana serves 8 {
+    requires 300 Harina
+    requires 150 Manteca
+    requires 4 Huevo
+    step Mezclar uses 300 Harina, 150 Manteca, 4 Huevo takes 5 minutes {
+        "Mezclar todo"
+    }
+}
+
+menu Cumpleanios {
+    include TortaDeManzana scaled to 16 servings
+}
+
+generate shopping list for Cumpleanios

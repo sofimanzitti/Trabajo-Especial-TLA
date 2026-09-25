@@ -14,27 +14,16 @@
  * @see https://westes.github.io/flex/manual/Definitions-Section.html#Definitions-Section
  */
 
-extern CompilationStatus ArithmeticOperatorLexemeAction(TokenLabel label);
-extern CompilationStatus EnterImportExpressionLexemeAction(FlexContext context);
-extern CompilationStatus EnterMultilineCommentLexemeAction(FlexContext context);
 extern CompilationStatus EOFLexemeAction();
+extern CompilationStatus IdentifierLexemeAction();
 extern CompilationStatus IgnoredLexemeAction();
-extern CompilationStatus IntegerLexemeAction();
-extern CompilationStatus LeaveImportExpressionLexemeAction();
-extern CompilationStatus LeaveMultilineCommentLexemeAction();
-extern CompilationStatus ParenthesisLexemeAction(TokenLabel label);
-extern CompilationStatus SubexpressionLexemeAction();
+extern CompilationStatus KeywordLexemeAction(TokenLabel label);
+extern CompilationStatus NumberLexemeAction();
+extern CompilationStatus StringLexemeAction();
+extern CompilationStatus UnitLexemeAction(UnitKind unit);
 extern CompilationStatus UnknownLexemeAction();
 
 %}
-
-/**
- * Flex contexts (a.k.a. start conditions).
- *
- * @see https://westes.github.io/flex/manual/Start-Conditions.html
- */
-%x IMPORT_EXPRESSION
-%x MULTILINE_COMMENT
 
 /**
  * Reusable patterns.
@@ -42,6 +31,10 @@ extern CompilationStatus UnknownLexemeAction();
  * @see https://westes.github.io/flex/manual/Matching.html
  * @see https://westes.github.io/flex/manual/Patterns.html
  */
+digit				[[:digit:]]+
+identifier			[A-Za-z_][A-Za-z0-9_]*
+number				{digit}(\.{digit})?
+string				\"[^\"\n]*\"
 whitespace			[[:space:]]+
 
 %%
@@ -54,25 +47,52 @@ whitespace			[[:space:]]+
 
 %}
 
-"{"									{ return EnterImportExpressionLexemeAction(IMPORT_EXPRESSION); }
-<IMPORT_EXPRESSION>[^{}]+			{ return SubexpressionLexemeAction(); }
-<IMPORT_EXPRESSION>"}"				{ return LeaveImportExpressionLexemeAction(); }
-<IMPORT_EXPRESSION>.				{ return UnknownLexemeAction(); }
+"//"[^\n]*							{ return IgnoredLexemeAction(); }
 
-"/*"								{ return EnterMultilineCommentLexemeAction(MULTILINE_COMMENT); }
-<MULTILINE_COMMENT>"*/"				{ return LeaveMultilineCommentLexemeAction(); }
-<MULTILINE_COMMENT>[^*]+			{ return IgnoredLexemeAction(); }
-<MULTILINE_COMMENT>.				{ return IgnoredLexemeAction(); }
+"ingredient"						{ return KeywordLexemeAction(INGREDIENT); }
+"in"								{ return KeywordLexemeAction(IN); }
+"density"							{ return KeywordLexemeAction(DENSITY); }
+"recipe"							{ return KeywordLexemeAction(RECIPE); }
+"serves"							{ return KeywordLexemeAction(SERVES); }
+"yields"							{ return KeywordLexemeAction(YIELDS); }
+"requires"							{ return KeywordLexemeAction(REQUIRES); }
+"step"								{ return KeywordLexemeAction(STEP); }
+"uses"								{ return KeywordLexemeAction(USES); }
+"depends"							{ return KeywordLexemeAction(DEPENDS); }
+"on"								{ return KeywordLexemeAction(ON); }
+"takes"								{ return KeywordLexemeAction(TAKES); }
+"minutes"							{ return KeywordLexemeAction(MINUTES); }
+"substitute"						{ return KeywordLexemeAction(SUBSTITUTE); }
+"with"								{ return KeywordLexemeAction(WITH); }
+"ratio"								{ return KeywordLexemeAction(RATIO); }
+"scale"								{ return KeywordLexemeAction(SCALE); }
+"to"								{ return KeywordLexemeAction(TO); }
+"servings"							{ return KeywordLexemeAction(SERVINGS); }
+"menu"								{ return KeywordLexemeAction(MENU); }
+"include"							{ return KeywordLexemeAction(INCLUDE); }
+"scaled"							{ return KeywordLexemeAction(SCALED); }
+"generate"							{ return KeywordLexemeAction(GENERATE); }
+"shopping"							{ return KeywordLexemeAction(SHOPPING); }
+"list"								{ return KeywordLexemeAction(LIST); }
+"for"								{ return KeywordLexemeAction(FOR); }
 
-"-"									{ return ArithmeticOperatorLexemeAction(SUB); }
-"*"									{ return ArithmeticOperatorLexemeAction(MUL); }
-"/"									{ return ArithmeticOperatorLexemeAction(DIV); }
-"+"									{ return ArithmeticOperatorLexemeAction(ADD); }
+"grams"								{ return UnitLexemeAction(UNIT_GRAMS); }
+"kilograms"							{ return UnitLexemeAction(UNIT_KILOGRAMS); }
+"milliliters"						{ return UnitLexemeAction(UNIT_MILLILITERS); }
+"liters"							{ return UnitLexemeAction(UNIT_LITERS); }
+"cups"								{ return UnitLexemeAction(UNIT_CUPS); }
+"tablespoons"						{ return UnitLexemeAction(UNIT_TABLESPOONS); }
+"teaspoons"							{ return UnitLexemeAction(UNIT_TEASPOONS); }
+"units"								{ return UnitLexemeAction(UNIT_UNITS); }
 
-"("									{ return ParenthesisLexemeAction(OPEN_PARENTHESIS); }
-")"									{ return ParenthesisLexemeAction(CLOSE_PARENTHESIS); }
+"="									{ return KeywordLexemeAction(EQUALS); }
+","									{ return KeywordLexemeAction(COMMA); }
+"{"									{ return KeywordLexemeAction(OPEN_BRACE); }
+"}"									{ return KeywordLexemeAction(CLOSE_BRACE); }
 
-[[:digit:]]+						{ return IntegerLexemeAction(); }
+{number}							{ return NumberLexemeAction(); }
+{string}							{ return StringLexemeAction(); }
+{identifier}						{ return IdentifierLexemeAction(); }
 
 {whitespace}						{ return IgnoredLexemeAction(); }
 .									{ return UnknownLexemeAction(); }

@@ -26,15 +26,24 @@ void yyerror(const YYLTYPE * location, const char * message) {}
 %union {
 	/** Terminals. */
 
-	signed int integer;
+	char * string;
+	double number;
+	UnitKind unit;
 	TokenLabel token;
 
 	/** Non-terminals. */
 
-	Constant * constant;
-	Expression * expression;
-	Factor * factor;
+	AssignmentOption * assignmentOption;
+	IdentifierList * identifierList;
+	IncludeItem * includeItem;
+	NumberOption * numberOption;
 	Program * program;
+	RequiresItem * requiresItem;
+	Statement * statement;
+	StepDeclaration * step;
+	UnitOption * unitOption;
+	UseItem * useItem;
+	YieldsOption * yieldsOption;
 }
 
 /**
@@ -45,60 +54,173 @@ void yyerror(const YYLTYPE * location, const char * message) {}
  *
  * @see https://www.gnu.org/software/bison/manual/html_node/Destructor-Decl.html
  */
-%destructor { destroyConstant($$); } <constant>
-%destructor { destroyExpression($$); } <expression>
-%destructor { destroyFactor($$); } <factor>
+%destructor { destroyAssignmentOption($$); } <assignmentOption>
+%destructor { destroyIdentifierList($$); } <identifierList>
+%destructor { destroyIncludeItem($$); } <includeItem>
+%destructor { destroyNumberOption($$); } <numberOption>
+%destructor { destroyRequiresItem($$); } <requiresItem>
+%destructor { destroyStatement($$); } <statement>
+%destructor { destroyStepDeclaration($$); } <step>
+%destructor { destroyUnitOption($$); } <unitOption>
+%destructor { destroyUseItem($$); } <useItem>
+%destructor { destroyYieldsOption($$); } <yieldsOption>
+%destructor { free($$); } <string>
 
 /** Terminals. */
-%token <integer> INTEGER
-%token <token> ADD
+%token <string> IDENT
+%token <string> STRING
+%token <number> NUMBER
+%token <unit> UNIT
+
+%token <token> COMMA
+%token <token> DENSITY
+%token <token> DEPENDS
+%token <token> EQUALS
+%token <token> FOR
+%token <token> GENERATE
+%token <token> IN
+%token <token> INCLUDE
+%token <token> INGREDIENT
+%token <token> LIST
+%token <token> MENU
+%token <token> MINUTES
+%token <token> ON
+%token <token> RATIO
+%token <token> RECIPE
+%token <token> REQUIRES
+%token <token> SCALE
+%token <token> SCALED
+%token <token> SERVES
+%token <token> SERVINGS
+%token <token> SHOPPING
+%token <token> STEP
+%token <token> SUBSTITUTE
+%token <token> TAKES
+%token <token> TO
+%token <token> USES
+%token <token> WITH
+%token <token> YIELDS
+
 %token <token> CLOSE_BRACE
-%token <token> CLOSE_COMMENT
-%token <token> CLOSE_PARENTHESIS
-%token <token> DIV
-%token <token> MUL
 %token <token> OPEN_BRACE
-%token <token> OPEN_COMMENT
-%token <token> OPEN_PARENTHESIS
-%token <token> SUB
 
 %token <token> IGNORED
 %token <token> UNKNOWN
 
 /** Non-terminals. */
-%type <constant> constant
-%type <expression> expression
-%type <factor> factor
+%type <assignmentOption> assignment_option
+%type <identifierList> depends_option identifier_list
+%type <includeItem> include_item include_item_list
+%type <numberOption> density_option serves_option takes_option
 %type <program> program
-
-/**
- * Precedence and associativity.
- *
- * @see https://en.cppreference.com/w/cpp/language/operator_precedence.html
- * @see https://www.gnu.org/software/bison/manual/html_node/Precedence.html
- */
-%left ADD SUB
-%left MUL DIV
+%type <requiresItem> requires_item requires_item_list
+%type <statement> generate_statement ingredient_declaration menu_declaration recipe_declaration scale_statement statement statement_list substitute_declaration
+%type <step> step step_list
+%type <unitOption> unit_option
+%type <useItem> uses_item_list uses_option
+%type <yieldsOption> yields_option
 
 %%
 
 // IMPORTANT: To use λ in the following grammar, use the %empty symbol.
 
-program: expression											{ $$ = ExpressionProgramSemanticAction($1); }
+program: statement_list											{ $$ = ProgramSemanticAction($1); }
 	;
 
-expression: expression[left] ADD expression[right]			{ $$ = ArithmeticExpressionSemanticAction($left, $right, ADDITION); }
-	| expression[left] DIV expression[right]				{ $$ = ArithmeticExpressionSemanticAction($left, $right, DIVISION); }
-	| expression[left] MUL expression[right]				{ $$ = ArithmeticExpressionSemanticAction($left, $right, MULTIPLICATION); }
-	| expression[left] SUB expression[right]				{ $$ = ArithmeticExpressionSemanticAction($left, $right, SUBTRACTION); }
-	| factor												{ $$ = FactorExpressionSemanticAction($1); }
+statement_list: %empty											{ $$ = NULL; }
+	| statement_list statement									{ $$ = AppendStatementSemanticAction($1, $2); }
 	;
 
-factor: OPEN_PARENTHESIS expression CLOSE_PARENTHESIS		{ $$ = ExpressionFactorSemanticAction($2); }
-	| constant												{ $$ = ConstantFactorSemanticAction($1); }
+statement: ingredient_declaration								{ $$ = $1; }
+	| recipe_declaration										{ $$ = $1; }
+	| substitute_declaration									{ $$ = $1; }
+	| scale_statement											{ $$ = $1; }
+	| menu_declaration											{ $$ = $1; }
+	| generate_statement										{ $$ = $1; }
 	;
 
-constant: INTEGER											{ $$ = IntegerConstantSemanticAction($1); }
+ingredient_declaration: INGREDIENT IDENT IN UNIT density_option	{ $$ = IngredientDeclarationSemanticAction($2, $4, $5); }
+	;
+
+density_option: %empty											{ $$ = NoNumberOptionSemanticAction(); }
+	| DENSITY NUMBER											{ $$ = NumberOptionSemanticAction($2); }
+	;
+
+recipe_declaration: RECIPE IDENT serves_option yields_option OPEN_BRACE requires_item_list step_list CLOSE_BRACE
+																{ $$ = RecipeDeclarationSemanticAction($2, $3, $4, $6, $7); }
+	;
+
+serves_option: %empty											{ $$ = NoNumberOptionSemanticAction(); }
+	| SERVES NUMBER												{ $$ = NumberOptionSemanticAction($2); }
+	;
+
+yields_option: %empty											{ $$ = NoYieldsOptionSemanticAction(); }
+	| YIELDS NUMBER UNIT										{ $$ = YieldsOptionSemanticAction($2, $3); }
+	;
+
+requires_item_list: %empty										{ $$ = NULL; }
+	| requires_item_list requires_item							{ $$ = AppendRequiresItemSemanticAction($1, $2); }
+	;
+
+requires_item: REQUIRES NUMBER unit_option IDENT				{ $$ = RequiresItemSemanticAction($2, $3, $4); }
+	;
+
+unit_option: %empty											{ $$ = NoUnitOptionSemanticAction(); }
+	| UNIT														{ $$ = UnitOptionSemanticAction($1); }
+	;
+
+step_list: %empty												{ $$ = NULL; }
+	| step_list step											{ $$ = AppendStepDeclarationSemanticAction($1, $2); }
+	;
+
+step: STEP IDENT uses_option depends_option takes_option OPEN_BRACE STRING CLOSE_BRACE
+																{ $$ = StepDeclarationSemanticAction($2, $3, $4, $5, $7); }
+	;
+
+uses_option: %empty											{ $$ = NULL; }
+	| USES uses_item_list										{ $$ = $2; }
+	;
+
+uses_item_list: NUMBER unit_option IDENT						{ $$ = UseItemSemanticAction($1, $2, $3); }
+	| uses_item_list COMMA NUMBER unit_option IDENT			{ $$ = AppendUseItemSemanticAction($1, UseItemSemanticAction($3, $4, $5)); }
+	;
+
+depends_option: %empty											{ $$ = NULL; }
+	| DEPENDS ON identifier_list								{ $$ = $3; }
+	;
+
+identifier_list: IDENT											{ $$ = IdentifierListSemanticAction($1); }
+	| identifier_list COMMA IDENT								{ $$ = AppendIdentifierSemanticAction($1, $3); }
+	;
+
+takes_option: %empty											{ $$ = NoNumberOptionSemanticAction(); }
+	| TAKES NUMBER MINUTES										{ $$ = NumberOptionSemanticAction($2); }
+	;
+
+substitute_declaration: SUBSTITUTE IDENT WITH IDENT RATIO NUMBER
+																{ $$ = SubstituteDeclarationSemanticAction($2, $4, $6); }
+	;
+
+scale_statement: assignment_option SCALE IDENT TO NUMBER SERVINGS
+																{ $$ = ScaleStatementSemanticAction($1, $3, $5); }
+	;
+
+assignment_option: %empty										{ $$ = NoAssignmentOptionSemanticAction(); }
+	| IDENT EQUALS												{ $$ = AssignmentOptionSemanticAction($1); }
+	;
+
+menu_declaration: MENU IDENT OPEN_BRACE include_item_list CLOSE_BRACE
+																{ $$ = MenuDeclarationSemanticAction($2, $4); }
+	;
+
+include_item_list: %empty										{ $$ = NULL; }
+	| include_item_list include_item							{ $$ = AppendIncludeItemSemanticAction($1, $2); }
+	;
+
+include_item: INCLUDE IDENT SCALED TO NUMBER SERVINGS			{ $$ = IncludeItemSemanticAction($2, $5); }
+	;
+
+generate_statement: GENERATE SHOPPING LIST FOR IDENT			{ $$ = GenerateStatementSemanticAction($5); }
 	;
 
 %%

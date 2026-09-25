@@ -1,0 +1,4 @@
+ingredient AceiteDeOliva in milliliters density 0.925
+recipe Vinagreta {
+    requires 12.5 AceiteDeOliva
+}

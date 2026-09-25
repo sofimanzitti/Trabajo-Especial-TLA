@@ -1,0 +1,3 @@
+recipe TortaDeManzana {
+    step Mezclar { }
+}

@@ -1,0 +1,3 @@
+recipe Empanadas {
+    step Armar { "Batir hasta lograr una mezcla homogénea, añadir azúcar y hornear a fuego lento" }
+}

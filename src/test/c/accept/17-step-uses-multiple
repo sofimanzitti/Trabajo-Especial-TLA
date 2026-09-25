@@ -1,0 +1,3 @@
+recipe TortaDeManzana {
+    step Mezclar uses 300 Harina, 150 Manteca, 4 Huevo { "Mezclar todo" }
+}

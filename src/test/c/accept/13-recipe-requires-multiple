@@ -1,0 +1,5 @@
+recipe TortaDeManzana {
+    requires 300 Harina
+    requires 150 Manteca
+    requires 4 Huevo
+}

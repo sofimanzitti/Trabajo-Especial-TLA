@@ -1,0 +1,5 @@
+recipe Caramelo yields 200 grams {
+    requires 200 Azucar
+    step Derretir uses 200 Azucar { "Derretir el azucar a fuego lento" }
+    step Enfriar depends on Derretir { "Dejar enfriar" }
+}
