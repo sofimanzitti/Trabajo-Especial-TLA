@@ -1,0 +1,4 @@
+recipe Caramelo {
+    requires 200 gram Azucar
+    step Derretir uses 1 cup Azucar { "Derretir el azucar a fuego lento" }
+}

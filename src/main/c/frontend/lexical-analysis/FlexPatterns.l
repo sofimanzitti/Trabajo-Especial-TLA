@@ -76,13 +76,21 @@ whitespace			[[:space:]]+
 "list"								{ return KeywordLexemeAction(LIST); }
 "for"								{ return KeywordLexemeAction(FOR); }
 
+"gram"								{ return UnitLexemeAction(UNIT_GRAMS); }
 "grams"								{ return UnitLexemeAction(UNIT_GRAMS); }
+"kilogram"							{ return UnitLexemeAction(UNIT_KILOGRAMS); }
 "kilograms"							{ return UnitLexemeAction(UNIT_KILOGRAMS); }
+"milliliter"						{ return UnitLexemeAction(UNIT_MILLILITERS); }
 "milliliters"						{ return UnitLexemeAction(UNIT_MILLILITERS); }
+"liter"								{ return UnitLexemeAction(UNIT_LITERS); }
 "liters"							{ return UnitLexemeAction(UNIT_LITERS); }
+"cup"								{ return UnitLexemeAction(UNIT_CUPS); }
 "cups"								{ return UnitLexemeAction(UNIT_CUPS); }
+"tablespoon"						{ return UnitLexemeAction(UNIT_TABLESPOONS); }
 "tablespoons"						{ return UnitLexemeAction(UNIT_TABLESPOONS); }
+"teaspoon"							{ return UnitLexemeAction(UNIT_TEASPOONS); }
 "teaspoons"							{ return UnitLexemeAction(UNIT_TEASPOONS); }
+"unit"								{ return UnitLexemeAction(UNIT_UNITS); }
 "units"								{ return UnitLexemeAction(UNIT_UNITS); }
 
 "="									{ return KeywordLexemeAction(EQUALS); }
