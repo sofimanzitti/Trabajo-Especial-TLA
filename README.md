@@ -83,7 +83,7 @@ La duración de un `step` va con `takes`, en `minute`/`minutes` o `hour`/`hours`
 
 Una receta se puede escalar de dos formas:
 
-* `scale TortaDeManzana to 16 servings`: agrega la receta escalada al HTML de salida. Sirve para cocinar una sola receta sin tener que armar un menú.
+* `scale TortaDeManzana to 16 servings`: escala una receta sin tener que armar un menú. En el Stage III esto va a producir la receta escalada como artefacto de salida.
 * `include TortaDeManzana scaled to 16 servings`, dentro de un `menu`: escala la receta como parte del menú. Esto es lo que se usa para `generate shopping list`.
 
 El lenguaje no tiene variables. Las recetas, ingredientes y menús tienen nombre y se usan por ese nombre, así que algo como `TortaGrande = scale ...` da error.
