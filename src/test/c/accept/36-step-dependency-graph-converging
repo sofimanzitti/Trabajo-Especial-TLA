@@ -1,0 +1,14 @@
+recipe Budin serves 8 {
+    requires 250 Harina
+    requires 150 Manteca
+    requires 100 Chocolate
+    requires 50 Nueces
+    requires 200 AzucarImpalpable
+    requires 30 Limon
+    step Masa uses 250 Harina, 150 Manteca { "Batir la manteca e integrar la harina" }
+    step Relleno uses 100 Chocolate, 50 Nueces { "Picar el chocolate y las nueces" }
+    step Glaseado uses 200 AzucarImpalpable, 30 Limon { "Mezclar el azucar con el jugo de limon" }
+    step Unir depends on Masa, Relleno takes 5 minutes { "Incorporar el relleno a la masa" }
+    step Hornear depends on Unir takes 40 minutes { "Hornear en molde de budin" }
+    step Glasear depends on Hornear, Glaseado { "Cubrir el budin frio con el glaseado" }
+}

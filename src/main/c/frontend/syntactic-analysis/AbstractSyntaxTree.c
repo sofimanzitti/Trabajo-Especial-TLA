@@ -20,16 +20,6 @@ ModuleDestructor initializeAbstractSyntaxTreeModule() {
 
 /* PUBLIC FUNCTIONS */
 
-void destroyAssignmentOption(AssignmentOption * assignmentOption) {
-	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
-	if (assignmentOption != NULL) {
-		if (assignmentOption->variableName != NULL) {
-			free(assignmentOption->variableName);
-		}
-		free(assignmentOption);
-	}
-}
-
 void destroyIdentifierList(IdentifierList * identifierList) {
 	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
 	if (identifierList != NULL) {
@@ -140,9 +130,6 @@ void destroyStatement(Statement * statement) {
 				destroyStepDeclaration(statement->recipe.steps);
 				break;
 			case SCALE_STATEMENT:
-				if (statement->scale.variableName != NULL) {
-					free(statement->scale.variableName);
-				}
 				if (statement->scale.recipeName != NULL) {
 					free(statement->scale.recipeName);
 				}

@@ -1,0 +1,3 @@
+recipe Te {
+    step Infusionar takes 1 minute { "Dejar reposar" }
+}

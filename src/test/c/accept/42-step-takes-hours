@@ -1,0 +1,4 @@
+recipe Pan {
+    step Levar takes 1 1/2 hours { "Dejar levar la masa" }
+    step Descansar takes 1 hour { "Dejar descansar" }
+}

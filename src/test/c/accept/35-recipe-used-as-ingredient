@@ -1,0 +1,11 @@
+recipe Caramelo yields 200 grams {
+    requires 200 Azucar
+    step Derretir uses 200 Azucar { "Derretir el azucar a fuego lento" }
+}
+
+recipe Flan serves 6 {
+    requires 100 gram Caramelo
+    requires 4 Huevo
+    step Acaramelar uses 100 gram Caramelo { "Cubrir el molde con el caramelo" }
+    step Hornear uses 4 Huevo depends on Acaramelar { "Verter la mezcla y hornear a bano maria" }
+}

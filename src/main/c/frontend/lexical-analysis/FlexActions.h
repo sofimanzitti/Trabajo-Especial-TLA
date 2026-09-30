@@ -5,6 +5,7 @@
 #include "../../support/language/String.h"
 #include "../../support/logging/Logger.h"
 #include "../../support/type/CompilationStatus.h"
+#include "../../support/type/CompilerState.h"
 #include "../../support/type/FlexContext.h"
 #include "../../support/type/LexicalAnalyzer.h"
 #include "../../support/type/ModuleDestructor.h"
@@ -14,6 +15,6 @@
 #include "../syntactic-analysis/AbstractSyntaxTree.h"
 
 /** Initialize module's internal state. */
-ModuleDestructor initializeFlexActionsModule();
+ModuleDestructor initializeFlexActionsModule(LexicalAnalyzer * lexicalAnalyzer, CompilerState * compilerState);
 
 #endif

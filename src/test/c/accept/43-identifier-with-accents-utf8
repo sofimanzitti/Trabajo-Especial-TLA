@@ -1,0 +1,6 @@
+ingredient Azúcar in grams
+ingredient Piñón in grams
+
+menu Cumpleaños {
+    include TortaDeAlmendras scaled to 12 servings
+}

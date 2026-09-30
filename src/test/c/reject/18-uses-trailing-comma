@@ -1,0 +1,3 @@
+recipe Torta {
+    step Mezclar uses 300 Harina, { "Mezclar" }
+}

@@ -1,0 +1,4 @@
+recipe Torta {
+    requires 1 1/2 cup Harina
+    step Mezclar uses 1 1/2 cup Harina { "Tamizar la harina" }
+}

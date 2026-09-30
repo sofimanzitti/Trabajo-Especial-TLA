@@ -14,11 +14,13 @@
 ModuleDestructor initializeBisonActionsModule();
 
 /**
+ * Reports a syntax error detected by Bison, with the line where it happened.
+ */
+void SyntaxErrorAction(const int line, const char * message);
+
+/**
  * Bison semantic actions.
  */
-
-AssignmentOption * AssignmentOptionSemanticAction(char * variableName);
-AssignmentOption * NoAssignmentOptionSemanticAction();
 
 IdentifierList * AppendIdentifierSemanticAction(IdentifierList * list, char * identifier);
 IdentifierList * IdentifierListSemanticAction(char * identifier);
@@ -49,7 +51,7 @@ Statement * GenerateStatementSemanticAction(char * menuName);
 Statement * IngredientDeclarationSemanticAction(char * name, const UnitKind unit, NumberOption * density);
 Statement * MenuDeclarationSemanticAction(char * name, IncludeItem * includes);
 Statement * RecipeDeclarationSemanticAction(char * name, NumberOption * serves, YieldsOption * yields, RequiresItem * requires, StepDeclaration * steps);
-Statement * ScaleStatementSemanticAction(AssignmentOption * assignment, char * recipeName, const double toServings);
+Statement * ScaleStatementSemanticAction(char * recipeName, const double toServings);
 Statement * SubstituteDeclarationSemanticAction(char * fromIngredient, char * toIngredient, const double ratio);
 
 Program * ProgramSemanticAction(Statement * statements);

@@ -1,0 +1,3 @@
+recipe Pan {
+    step Levar takes 2 { "Dejar levar la masa" }
+}

@@ -1,0 +1,5 @@
+recipe Torta serves 8 {
+    // primero los ingredientes
+    requires 300 Harina // tamizada
+    step Mezclar uses 300 Harina { "Mezclar" } // a mano
+}

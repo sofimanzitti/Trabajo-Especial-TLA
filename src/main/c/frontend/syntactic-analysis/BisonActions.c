@@ -34,20 +34,11 @@ static void _logSyntacticAnalyzerAction(const char * functionName) {
 
 /* PUBLIC FUNCTIONS */
 
-AssignmentOption * AssignmentOptionSemanticAction(char * variableName) {
-	_logSyntacticAnalyzerAction(__FUNCTION__);
-	AssignmentOption * assignmentOption = calloc(1, sizeof(AssignmentOption));
-	assignmentOption->present = true;
-	assignmentOption->variableName = variableName;
-	return assignmentOption;
-}
-
-AssignmentOption * NoAssignmentOptionSemanticAction() {
-	_logSyntacticAnalyzerAction(__FUNCTION__);
-	AssignmentOption * assignmentOption = calloc(1, sizeof(AssignmentOption));
-	assignmentOption->present = false;
-	assignmentOption->variableName = NULL;
-	return assignmentOption;
+void SyntaxErrorAction(const int line, const char * message) {
+	if (_compilerState->hasLexicalError) {
+		return;
+	}
+	logError(_logger, "Line %d: %s.", line, message);
 }
 
 IdentifierList * IdentifierListSemanticAction(char * identifier) {
@@ -281,16 +272,13 @@ Statement * RecipeDeclarationSemanticAction(char * name, NumberOption * serves, 
 	return statement;
 }
 
-Statement * ScaleStatementSemanticAction(AssignmentOption * assignment, char * recipeName, const double toServings) {
+Statement * ScaleStatementSemanticAction(char * recipeName, const double toServings) {
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	Statement * statement = calloc(1, sizeof(Statement));
 	statement->type = SCALE_STATEMENT;
-	statement->scale.hasAssignment = assignment->present;
-	statement->scale.variableName = assignment->variableName;
 	statement->scale.recipeName = recipeName;
 	statement->scale.toServings = toServings;
 	statement->next = NULL;
-	free(assignment);
 	return statement;
 }
 

@@ -12,7 +12,6 @@ ModuleDestructor initializeAbstractSyntaxTreeModule();
 typedef enum StatementType StatementType;
 typedef enum UnitKind UnitKind;
 
-typedef struct AssignmentOption AssignmentOption;
 typedef struct GenerateStatement GenerateStatement;
 typedef struct IdentifierList IdentifierList;
 typedef struct IncludeItem IncludeItem;
@@ -36,6 +35,7 @@ enum UnitKind {
 	UNIT_KILOGRAMS,
 	UNIT_LITERS,
 	UNIT_MILLILITERS,
+	UNIT_PINCHES,
 	UNIT_TABLESPOONS,
 	UNIT_TEASPOONS,
 	UNIT_UNITS
@@ -64,11 +64,6 @@ struct YieldsOption {
 	bool present;
 	double amount;
 	UnitKind unit;
-};
-
-struct AssignmentOption {
-	bool present;
-	char * variableName;
 };
 
 struct IdentifierList {
@@ -133,8 +128,6 @@ struct SubstituteDeclaration {
 };
 
 struct ScaleStatement {
-	bool hasAssignment;
-	char * variableName;
 	char * recipeName;
 	double toServings;
 };
@@ -165,7 +158,6 @@ struct Program {
 	Statement * statements;
 };
 
-void destroyAssignmentOption(AssignmentOption * assignmentOption);
 void destroyIdentifierList(IdentifierList * identifierList);
 void destroyIncludeItem(IncludeItem * includeItem);
 void destroyNumberOption(NumberOption * numberOption);

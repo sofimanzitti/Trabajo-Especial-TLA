@@ -7,12 +7,12 @@
 /**
  * The error reporting function for Bison parser.
  *
- * @todo Add location to the grammar and "pushToken" API function.
- *
  * @see https://www.gnu.org/software/bison/manual/html_node/Error-Reporting-Function.html
  * @see https://www.gnu.org/software/bison/manual/html_node/Tracking-Locations.html
  */
-void yyerror(const YYLTYPE * location, const char * message) {}
+void yyerror(const YYLTYPE * location, const char * message) {
+	SyntaxErrorAction(location->first_line, message);
+}
 
 %}
 
@@ -22,6 +22,9 @@ void yyerror(const YYLTYPE * location, const char * message) {}
 %define api.value.union.name SemanticValue
 %define parse.error detailed
 %locations
+
+// Computes the exact set of expected tokens for syntax-error messages.
+%define parse.lac full
 
 %union {
 	/** Terminals. */
@@ -33,7 +36,6 @@ void yyerror(const YYLTYPE * location, const char * message) {}
 
 	/** Non-terminals. */
 
-	AssignmentOption * assignmentOption;
 	IdentifierList * identifierList;
 	IncludeItem * includeItem;
 	NumberOption * numberOption;
@@ -54,7 +56,6 @@ void yyerror(const YYLTYPE * location, const char * message) {}
  *
  * @see https://www.gnu.org/software/bison/manual/html_node/Destructor-Decl.html
  */
-%destructor { destroyAssignmentOption($$); } <assignmentOption>
 %destructor { destroyIdentifierList($$); } <identifierList>
 %destructor { destroyIncludeItem($$); } <includeItem>
 %destructor { destroyNumberOption($$); } <numberOption>
@@ -67,48 +68,47 @@ void yyerror(const YYLTYPE * location, const char * message) {}
 %destructor { free($$); } <string>
 
 /** Terminals. */
-%token <string> IDENT
-%token <string> STRING
-%token <number> NUMBER
-%token <unit> UNIT
+%token <string> IDENT "identifier"
+%token <string> STRING "description"
+%token <number> NUMBER "number"
+%token <unit> UNIT "measurement unit"
 
-%token <token> COMMA
-%token <token> DENSITY
-%token <token> DEPENDS
-%token <token> EQUALS
-%token <token> FOR
-%token <token> GENERATE
-%token <token> IN
-%token <token> INCLUDE
-%token <token> INGREDIENT
-%token <token> LIST
-%token <token> MENU
-%token <token> MINUTES
-%token <token> ON
-%token <token> RATIO
-%token <token> RECIPE
-%token <token> REQUIRES
-%token <token> SCALE
-%token <token> SCALED
-%token <token> SERVES
-%token <token> SERVINGS
-%token <token> SHOPPING
-%token <token> STEP
-%token <token> SUBSTITUTE
-%token <token> TAKES
-%token <token> TO
-%token <token> USES
-%token <token> WITH
-%token <token> YIELDS
+%token <token> COMMA ","
+%token <token> DENSITY "density"
+%token <token> DEPENDS "depends"
+%token <token> FOR "for"
+%token <token> GENERATE "generate"
+%token <token> HOURS "hours"
+%token <token> IN "in"
+%token <token> INCLUDE "include"
+%token <token> INGREDIENT "ingredient"
+%token <token> LIST "list"
+%token <token> MENU "menu"
+%token <token> MINUTES "minutes"
+%token <token> ON "on"
+%token <token> RATIO "ratio"
+%token <token> RECIPE "recipe"
+%token <token> REQUIRES "requires"
+%token <token> SCALE "scale"
+%token <token> SCALED "scaled"
+%token <token> SERVES "serves"
+%token <token> SERVINGS "servings"
+%token <token> SHOPPING "shopping"
+%token <token> STEP "step"
+%token <token> SUBSTITUTE "substitute"
+%token <token> TAKES "takes"
+%token <token> TO "to"
+%token <token> USES "uses"
+%token <token> WITH "with"
+%token <token> YIELDS "yields"
 
-%token <token> CLOSE_BRACE
-%token <token> OPEN_BRACE
+%token <token> CLOSE_BRACE "}"
+%token <token> OPEN_BRACE "{"
 
 %token <token> IGNORED
 %token <token> UNKNOWN
 
 /** Non-terminals. */
-%type <assignmentOption> assignment_option
 %type <identifierList> depends_option identifier_list
 %type <includeItem> include_item include_item_list
 %type <numberOption> density_option serves_option takes_option
@@ -195,18 +195,14 @@ identifier_list: IDENT											{ $$ = IdentifierListSemanticAction($1); }
 
 takes_option: %empty											{ $$ = NoNumberOptionSemanticAction(); }
 	| TAKES NUMBER MINUTES										{ $$ = NumberOptionSemanticAction($2); }
+	| TAKES NUMBER HOURS										{ $$ = NumberOptionSemanticAction($2 * 60); }
 	;
 
 substitute_declaration: SUBSTITUTE IDENT WITH IDENT RATIO NUMBER
 																{ $$ = SubstituteDeclarationSemanticAction($2, $4, $6); }
 	;
 
-scale_statement: assignment_option SCALE IDENT TO NUMBER SERVINGS
-																{ $$ = ScaleStatementSemanticAction($1, $3, $5); }
-	;
-
-assignment_option: %empty										{ $$ = NoAssignmentOptionSemanticAction(); }
-	| IDENT EQUALS												{ $$ = AssignmentOptionSemanticAction($1); }
+scale_statement: SCALE IDENT TO NUMBER SERVINGS					{ $$ = ScaleStatementSemanticAction($2, $4); }
 	;
 
 menu_declaration: MENU IDENT OPEN_BRACE include_item_list CLOSE_BRACE
