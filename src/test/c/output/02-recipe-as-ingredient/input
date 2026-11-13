@@ -1,0 +1,26 @@
+ingredient Azucar in grams
+ingredient Huevo in units
+
+recipe Caramelo yields 200 grams {
+    requires 200 Azucar
+    step Derretir uses 200 Azucar takes 10 minutes { "Derretir el azucar a fuego lento" }
+}
+
+recipe Flan serves 6 {
+    requires 100 gram Caramelo
+    requires 4 Huevo
+    step Acaramelar uses 100 gram Caramelo takes 5 minutes { "Cubrir el molde con el caramelo" }
+    step Hornear uses 4 Huevo depends on Acaramelar takes 1 1/2 hours { "Hornear a bano maria" }
+}
+
+recipe Merengue serves 4 {
+    requires 50 Azucar
+    requires 2 Huevo
+}
+
+menu Postres {
+    include Flan scaled to 12 servings
+    include Merengue scaled to 6 servings
+}
+
+generate shopping list for Postres

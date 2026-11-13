@@ -1,3 +1,5 @@
+ingredient Harina in grams
+
 recipe TortaDeManzana {
     requires 1 kilogram Harina
 }

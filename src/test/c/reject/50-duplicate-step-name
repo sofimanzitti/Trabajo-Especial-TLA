@@ -1,0 +1,4 @@
+recipe Torta {
+    step Mezclar { "Mezclar" }
+    step Mezclar { "Mezclar otra vez" }
+}

@@ -2,12 +2,14 @@
 
 # Trabajo Especial TLA — G-147
 
-Frontend (análisis léxico y sintáctico) de **recetas-lang**, un DSL para describir recetas de cocina y combinarlas en menús, escrito con Flex y Bison. El compilador reconoce el lenguaje y construye su AST; automatizar el escalado de porciones y la generación de una lista de compras consolidada es responsabilidad de las próximas etapas del trabajo.
+Compilador de **recetas-lang**, un DSL para describir recetas de cocina y combinarlas en menús, escrito en C con Flex y Bison. Reconoce el lenguaje, construye su AST, valida que el programa tenga sentido en el dominio (análisis semántico) y genera los artefactos finales: una lista de compras consolidada en CSV y las recetas escaladas en HTML.
 
-Trabajo Especial de Autómatas, Teoría de Lenguajes y Compiladores (ITBA), grupo G-147: Sol Sommer, Sofía Manzitti, Morena Díaz Macchi y Lucas Crosta. La especificación del Stage I está en [`doc/`](doc), y la sintaxis vigente en la sección [Sintaxis](#sintaxis). Este repositorio está basado en la plantilla [Flex-Bison-Compiler](https://github.com/agustin-golmar/Flex-Bison-Compiler) de la cátedra.
+Trabajo Especial de Autómatas, Teoría de Lenguajes y Compiladores (ITBA), grupo G-147: Sol Sommer, Sofía Manzitti, Morena Díaz Macchi y Lucas Crosta. La especificación del Stage I y el informe final del Stage III están en [`doc/`](doc), y la sintaxis vigente en la sección [Sintaxis](#sintaxis). Este repositorio está basado en la plantilla [Flex-Bison-Compiler](https://github.com/agustin-golmar/Flex-Bison-Compiler) de la cátedra.
 
 * [Sobre el proyecto](#sobre-el-proyecto)
 * [Sintaxis](#sintaxis)
+* [Análisis semántico](#análisis-semántico)
+* [Artefactos generados](#artefactos-generados)
 * [Requisitos](#requisitos)
 * [Configuración](#configuración)
 * [Comandos](#comandos)
@@ -18,9 +20,15 @@ Trabajo Especial de Autómatas, Teoría de Lenguajes y Compiladores (ITBA), grup
 
 `recetas-lang` permite declarar `ingredient`s (con su unidad y, opcionalmente, densidad), `recipe`s (con lo que `requires` y una red de `step`s que declaran qué ingredientes `uses` y de qué otros `step`s `depends`), `substitute`s entre ingredientes, `scale` de una receta a otra cantidad de porciones, `menu`s que `include` recetas escaladas, y `generate shopping list` para un menú.
 
-En esta etapa (Stage II) está hecho el frontend: el analizador léxico (`src/main/c/frontend/lexical-analysis`) y el sintáctico (`src/main/c/frontend/syntactic-analysis`), que arman el AST (`AbstractSyntaxTree.h`/`.c`). El análisis semántico (ingredientes no declarados, ciclos de dependencias, conversión de unidades, etc.) va en el Stage III, así que por ahora se aceptan algunos programas que semánticamente están mal. Por ejemplo, hay tests de aceptación que usan `step`s, recetas o menús que no están declarados en el mismo archivo.
+El compilador tiene tres fases:
 
-La especificación que está en [`doc/`](doc) es la del Stage I. Después de la devolución cambiamos la sintaxis: sacamos los tipos genéricos, los operadores, las estructuras de control, el `;` al final y la asignación de variables, y los `step`s ahora tienen nombre y dependencias. La sintaxis actual es la de abajo.
+* **Frontend** (`src/main/c/frontend`): el analizador léxico (`lexical-analysis`) y el sintáctico (`syntactic-analysis`), que arman el AST (`AbstractSyntaxTree.h`/`.c`).
+* **Análisis semántico** (`src/main/c/backend/semantic-analysis`): recorre el AST, arma la tabla de símbolos y valida las reglas del dominio. Ver [Análisis semántico](#análisis-semántico).
+* **Generación de código** (`src/main/c/backend/code-generation`): escala las recetas, consolida los ingredientes de un menú y escribe los archivos de salida. Ver [Artefactos generados](#artefactos-generados).
+
+Si una fase rechaza el programa, las siguientes no se ejecutan y el compilador termina con estado distinto de `0`.
+
+La especificación que está en [`doc/`](doc) es la del Stage I (el informe final la actualiza). Después de la devolución cambiamos la sintaxis: sacamos los tipos genéricos, los operadores, las estructuras de control, el `;` al final y la asignación de variables, y los `step`s ahora tienen nombre y dependencias. La sintaxis actual es la de abajo.
 
 ## Sintaxis
 
@@ -83,7 +91,7 @@ La duración de un `step` va con `takes`, en `minute`/`minutes` o `hour`/`hours`
 
 Una receta se puede escalar de dos formas:
 
-* `scale TortaDeManzana to 16 servings`: escala una receta sin tener que armar un menú. En el Stage III esto va a producir la receta escalada como artefacto de salida.
+* `scale TortaDeManzana to 16 servings`: escala una receta sin tener que armar un menú. Esto produce la receta escalada como archivo HTML.
 * `include TortaDeManzana scaled to 16 servings`, dentro de un `menu`: escala la receta como parte del menú. Esto es lo que se usa para `generate shopping list`.
 
 El lenguaje no tiene variables. Las recetas, ingredientes y menús tienen nombre y se usan por ese nombre, así que algo como `TortaGrande = scale ...` da error.
@@ -101,7 +109,7 @@ step Hornear depends on Unir takes 40 minutes { "Hornear en molde de budin" }
 step Glasear depends on Hornear, Glaseado { "Cubrir el budin frio con el glaseado" }
 ```
 
-En el Stage III vamos a chequear que no haya ciclos, que cada `depends on` sea un `step` de la misma receta y que entre todos los `step`s no se use más de lo que dicen los `requires`.
+El análisis semántico chequea que no haya ciclos, que cada `depends on` sea un `step` de la misma receta y que entre todos los `step`s no se use más de lo que dicen los `requires`.
 
 ### Recetas como ingredientes
 
@@ -112,7 +120,39 @@ Una receta se puede usar como ingrediente de otra (por ejemplo, un `Caramelo` pa
 * Si una receta se usa como ingrediente, tiene que tener `yields`. Si otra receta pide `requires 100 gram Caramelo` y el caramelo rinde 200 gramos, se usa la mitad de la receta del caramelo. En este caso `serves` no se tiene en cuenta.
 * Una receta puede tener las dos cosas (`serves 4 yields 200 grams`).
 
-Que la receta tenga `yields`, que no haya ciclos entre recetas y que no haya un ingrediente y una receta con el mismo nombre se va a chequear en el Stage III.
+Que la receta tenga `yields`, que no haya ciclos entre recetas y que no haya un ingrediente y una receta con el mismo nombre también lo chequea el análisis semántico.
+
+## Análisis semántico
+
+Todo se tiene que declarar antes de usarse (en el orden del archivo), así que una receta no puede pedir otra que se declara más abajo. Los errores se informan todos juntos, con su línea, por ejemplo: `Line 4: requires in recipe 'Torta': 'Harina' is not a declared ingredient or recipe.`
+
+| Qué se chequea | Detalle |
+| :--- | :--- |
+| Nombres | Un ingrediente y una receta no pueden compartir nombre ni repetirse. Los menús tienen su propio espacio de nombres. |
+| Cantidades | `serves`, `yields`, `density`, `ratio`, `takes`, cada cantidad y cada cantidad de porciones tienen que ser mayores que cero. |
+| `requires` | El ingrediente o la receta tiene que estar declarado, no puede repetirse en la misma receta y una receta no puede requerirse a sí misma. |
+| Unidades | Las unidades de una misma dimensión (masa, volumen) se convierten solas. Pasar de masa a volumen solo se puede si el ingrediente declara `density` (en g/ml). Las `unit` no se convierten a nada. Una receta usada como ingrediente solo acepta unidades de la dimensión de su `yields`. |
+| Recetas como ingredientes | Tienen que declarar `yields`. |
+| `step` | Nombres únicos dentro de la receta, `depends on` solo de `step`s de esa receta, sin ciclos (ni de un `step` consigo mismo), y `uses` solo de lo que la receta `requires`. |
+| Totales | Lo que usan entre todos los `step`s de un ingrediente no puede superar lo que dice el `requires` (las unidades se convierten antes de sumar). Que sobre sí está permitido. |
+| `substitute` | Los dos tienen que ser ingredientes declarados y distintos, sin regla repetida y sin ciclos (de cualquier largo). Si tienen distinta dimensión, alguno de los dos tiene que declarar `density`. |
+| `scale` e `include` | La receta tiene que estar declarada y declarar `serves`. |
+| `generate shopping list` | El menú tiene que estar declarado. |
+
+Si una receta tiene `step`s pero uno de sus `requires` no lo usa ningún `step`, el compilador avisa con un warning, pero no la rechaza.
+
+## Artefactos generados
+
+El compilador lee el programa por entrada estándar y escribe los archivos en un directorio (por defecto `out/`, o el que se pase como primer argumento: `src/main/bash/run.sh programa.txt mi-directorio`).
+
+| Sentencia | Archivo |
+| :--- | :--- |
+| `scale <Receta> to <N> servings` | `<Receta>-<N>-servings.html`: la receta escalada, con sus pasos en orden de dependencia. |
+| `generate shopping list for <Menú>` | `<Menú>-shopping-list.csv`: la lista de compras consolidada. Y `<Menú>-recipes.html`: las recetas del menú, ya escaladas. |
+
+La lista de compras tiene las columnas `ingrediente,cantidad,unidad,alternativas`, ordenada por nombre. Cada cantidad está en la unidad con la que se declaró el ingrediente, y los ingredientes que se repiten entre recetas se suman. Si una receta se usa como ingrediente, se expande en proporción a lo que se pide respecto de lo que rinde y se suma al resto. Las cantidades de `unit` se redondean para arriba, porque no se compra media unidad. Si hay un `substitute` para un ingrediente, la columna `alternativas` indica cuánto habría que comprar del sustituto (ya multiplicado por el `ratio` y convertido a su unidad), por ejemplo `AceiteDeOliva: 468.75 mililitros`.
+
+Los archivos HTML muestran, además de los ingredientes y pasos escalados, el tiempo total de trabajo y el tiempo mínimo si los `step`s independientes se hacen en paralelo (el camino crítico del grafo de dependencias). Los textos de salida están en español.
 
 ## Requisitos
 
@@ -156,11 +196,11 @@ Compila un programa:
 src/main/bash/run.sh <program>
 ```
 
-donde `<program>` es la ruta al archivo que representa su punto de entrada.
+donde `<program>` es la ruta al archivo que representa su punto de entrada. Opcionalmente, se puede agregar el directorio donde se escriben los [artefactos](#artefactos-generados).
 
 ### Test
 
-Ejecuta todos los tests unitarios disponibles en la carpeta `src/test/c`:
+Ejecuta todos los tests disponibles en la carpeta `src/test/c`. En `accept` están los programas que se tienen que aceptar y en `reject` los que se tienen que rechazar (ya sea por sintaxis o por semántica). En `output` hay programas con los archivos que se esperan de ellos (`input` y `expected/`):
 
 ```bash
 src/main/bash/test.sh

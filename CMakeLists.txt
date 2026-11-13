@@ -34,6 +34,11 @@ if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
 	# The header files (*.h extension), are automatically included from the source-codes.
 	add_executable(Flex-Bison-Compiler
 		src/main/c/EntryPoint.c
+		src/main/c/backend/code-generation/CodeGeneration.c
+		src/main/c/backend/semantic-analysis/SemanticAnalysis.c
+		src/main/c/backend/semantic-analysis/StepGraph.c
+		src/main/c/backend/semantic-analysis/SymbolTable.c
+		src/main/c/backend/semantic-analysis/Units.c
 		src/main/c/frontend/Frontend.c
 		src/main/c/frontend/lexical-analysis/FlexActions.c
 		src/main/c/frontend/lexical-analysis/FlexScanner.c
@@ -48,7 +53,7 @@ if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
 	)
 
 	# Link final project and libraries.
-	target_link_libraries(Flex-Bison-Compiler)
+	target_link_libraries(Flex-Bison-Compiler m)
 else ()
 	message(NOTICE "The C compiler is unknown.")
 endif ()

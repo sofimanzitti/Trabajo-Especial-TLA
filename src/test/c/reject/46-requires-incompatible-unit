@@ -1,0 +1,5 @@
+ingredient Huevo in units
+
+recipe Torta {
+    requires 100 grams Huevo
+}

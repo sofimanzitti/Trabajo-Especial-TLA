@@ -1,3 +1,9 @@
+recipe TortaDeManzana serves 8 {
+}
+
+recipe Empanadas serves 12 {
+}
+
 menu Cumpleanios {
     include TortaDeManzana scaled to 16 servings
     include Empanadas scaled to 24 servings

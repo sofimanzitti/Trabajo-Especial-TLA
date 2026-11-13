@@ -1,0 +1,30 @@
+// Declaraciones
+ingredient Harina in grams
+ingredient Manteca in grams
+ingredient Huevo in units
+ingredient AceiteDeOliva in milliliters density 0.92
+
+recipe TortaDeManzana serves 8 {
+    requires 300 Harina
+    requires 150 Manteca
+    requires 4 Huevo
+    step Mezclar uses 300 Harina, 150 Manteca takes 5 minutes { "Mezclar la harina con la manteca" }
+    step Batir uses 4 Huevo depends on Mezclar takes 3 minutes { "Agregar los huevos y batir" }
+    step Hornear depends on Batir takes 40 minutes { "Hornear la mezcla" }
+}
+
+recipe Empanadas serves 12 {
+    requires 500 Harina
+    requires 100 Manteca
+}
+
+substitute Manteca with AceiteDeOliva ratio 0.75
+
+scale TortaDeManzana to 16 servings
+
+menu Cumpleanios {
+    include TortaDeManzana scaled to 20 servings
+    include Empanadas scaled to 24 servings
+}
+
+generate shopping list for Cumpleanios

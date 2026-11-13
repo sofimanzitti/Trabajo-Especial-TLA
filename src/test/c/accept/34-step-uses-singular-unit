@@ -1,4 +1,6 @@
+ingredient Azucar in grams
+
 recipe Caramelo {
     requires 200 gram Azucar
-    step Derretir uses 1 cup Azucar { "Derretir el azucar a fuego lento" }
+    step Derretir uses 100 gram Azucar { "Derretir el azucar a fuego lento" }
 }

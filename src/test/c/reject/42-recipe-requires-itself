@@ -1,0 +1,3 @@
+recipe Torta yields 100 grams {
+    requires 50 gram Torta
+}

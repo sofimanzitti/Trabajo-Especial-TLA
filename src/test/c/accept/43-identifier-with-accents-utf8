@@ -1,6 +1,11 @@
 ingredient Azúcar in grams
 ingredient Piñón in grams
 
+recipe TortaDeAlmendras serves 12 {
+    requires 100 Azúcar
+    requires 50 Piñón
+}
+
 menu Cumpleaños {
     include TortaDeAlmendras scaled to 12 servings
 }

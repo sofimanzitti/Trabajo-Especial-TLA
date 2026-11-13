@@ -1,3 +1,5 @@
+ingredient Sal in teaspoons
+
 recipe Vinagreta {
     requires 1/2 teaspoon Sal
 }

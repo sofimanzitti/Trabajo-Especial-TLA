@@ -1,0 +1,5 @@
+ingredient Aceite in milliliters density 0.92
+
+recipe Vinagreta {
+    requires 100 grams Aceite
+}

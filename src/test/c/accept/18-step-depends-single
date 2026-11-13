@@ -1,3 +1,4 @@
 recipe TortaDeManzana {
+    step Mezclar { "Mezclar todo" }
     step Hornear depends on Mezclar { "Hornear 40 minutos" }
 }

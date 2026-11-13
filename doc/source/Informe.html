@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Informe final - recetas-lang</title>
+<style>
+@page { size: A4; margin: 2.2cm 2.2cm 2.4cm 2.2cm; }
+body { font-family: "Palatino Linotype", Palatino, Georgia, serif; font-size: 11pt; line-height: 1.45; color: #111; text-align: justify; }
+h1 { font-size: 17pt; margin: 1.6em 0 .5em; page-break-after: avoid; }
+h2 { font-size: 13pt; margin: 1.3em 0 .4em; page-break-after: avoid; }
+h3 { font-size: 11.5pt; margin: 1.1em 0 .3em; page-break-after: avoid; }
+p { margin: .5em 0; }
+code, pre { font-family: Menlo, Consolas, monospace; font-size: 8.8pt; }
+pre { background: #f4f4f4; border: 1px solid #ddd; padding: .5em .7em; white-space: pre-wrap; page-break-inside: avoid; text-align: left; margin: .5em 0 .2em; }
+pre.g { white-space: pre; font-size: 7.6pt; }
+.cap { font-size: 9.5pt; text-align: center; margin: 0 0 .9em; }
+table { border-collapse: collapse; margin: .6em auto; font-size: 10pt; }
+th, td { border: 1px solid #999; padding: .25em .6em; text-align: left; vertical-align: top; }
+th { background: #eee; }
+.cover { text-align: center; page-break-after: always; padding-top: 4cm; }
+.cover h1 { font-size: 26pt; margin: .2em 0; }
+.cover .sub { font-size: 13pt; font-variant: small-caps; margin-bottom: 2.5em; }
+.toc { page-break-after: always; }
+.toc h1 { margin-top: 0; }
+.toc table { border: none; width: 100%; font-size: 11pt; }
+.toc td { border: none; padding: .12em 0; }
+.toc td.n { text-align: right; width: 2.5em; }
+.toc .l2 td:first-child { padding-left: 1.8em; }
+.pb { page-break-before: always; }
+ul, ol { margin: .4em 0 .4em 1.4em; padding: 0; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+<div class="sub">Autómatas, Teoría de Lenguajes y Compiladores &mdash; Ingeniería Informática</div>
+<h1>recetas-lang</h1>
+<div class="sub">Informe final del Proyecto Especial &mdash; Grupo G-147</div>
+<table>
+<tr><th>Nombres</th><th>Apellidos</th><th>Legajo</th><th>E-mail</th></tr>
+<tr><td>Sol</td><td>Sommer</td><td>64.887</td><td>ssommer@itba.edu.ar</td></tr>
+<tr><td>Sofía</td><td>Manzitti</td><td>65.521</td><td>smanzitti@itba.edu.ar</td></tr>
+<tr><td>Morena</td><td>Díaz Macchi</td><td>65.558</td><td>mdiazmacchi@itba.edu.ar</td></tr>
+<tr><td>Lucas Ariel</td><td>Crosta</td><td>67.266</td><td>lcrosta@itba.edu.ar</td></tr>
+</table>
+<p>Repositorio: https://github.com/sofimanzitti/Trabajo-Especial-TLA</p>
+<p>13 de noviembre de 2026</p>
+</div>
+
+<div class="toc">
+<h1>Tabla de contenidos</h1>
+<table>@@TOC@@</table>
+</div>
+
+<h1 id="s1">1. Introducción</h1>
+<p>Este informe describe el diseño y la implementación de <b>recetas-lang</b>, un lenguaje de dominio específico (DSL) para escribir recetas de cocina y combinarlas en menús, y de su compilador, desarrollado con Flex y Bison sobre C. Dado un programa, el compilador verifica que sea correcto con respecto al dominio y produce dos artefactos: una lista de compras consolidada (CSV) y las recetas ya escaladas, con sus pasos en orden (HTML).</p>
+<p>El trabajo se entregó en tres etapas: el diseño del lenguaje (Stage I), el frontend, es decir, los analizadores léxico y sintáctico que construyen el AST (Stage II), y el backend, con el análisis semántico y la generación de código (Stage III). El informe documenta el resultado final; donde difiere de la especificación del Stage I, se indica el motivo.</p>
+
+<h1 id="s2">2. Modelo Computacional</h1>
+<h2 id="s2-1">2.1. Dominio</h2>
+<p>Quien cocina con regularidad mantiene un repertorio de recetas escritas para una cantidad fija de porciones. Cuando cambia la cantidad de comensales, o cuando se combinan varias recetas en un mismo evento, hay que recalcular a mano las cantidades, unificar los ingredientes repetidos y rearmar la lista de compras. El repertorio, además, vive en un formato no estructurado (una libreta, un documento de texto), sobre el que nada se puede verificar ni automatizar.</p>
+<p>La necesidad es <i>funcional</i>: se quiere describir recetas y menús de forma estructurada y que, a partir de esa descripción, se deriven las cantidades escaladas y la lista de compras, y que se detecten errores en la receta antes de ir a comprar o a cocinar (un paso que depende de otro que viene después, o pasos que usan en total más harina de la que la receta pide). Un lenguaje con su compilador es una solución razonable porque el dominio es acotado (ingredientes, unidades, recetas, pasos, menús), la descripción es declarativa y las reglas de validación son mecánicas.</p>
+<p>La mejora que se busca no está en procesar más comensales (eso es un problema de cantidades, no de productividad), sino en la productividad de quien escribe y mantiene el repertorio: cada receta se escribe una sola vez, se versiona como cualquier código y se reutiliza para cualquier cantidad de porciones y de combinación de menú. Dentro del dominio, una receta puede usarse como ingrediente de otra (por ejemplo, un caramelo para varios postres), de modo que las partes comunes también se escriben una sola vez.</p>
+<p>No se modela el proceso físico de cocinar (temperaturas, técnicas, utensilios), sino solo lo necesario para escalar, sustituir y consolidar cantidades y para ordenar los pasos. Por eso no hace falta un runtime: los artefactos de salida son archivos estáticos que otras aplicaciones consumen directamente (una planilla de cálculo, un navegador), y todo el cálculo ocurre durante la compilación.</p>
+
+<h2 id="s2-2">2.2. Lenguaje</h2>
+<p>Un programa es una lista de sentencias sin separador. Los comentarios empiezan con <code>//</code>. El <b>Código 1</b> muestra una receta con su red de pasos y un menú, y el <b>Código 2</b> una receta usada como ingrediente de otra y una sustitución.</p>
+<pre>ingredient Harina in grams
+ingredient Manteca in grams
+ingredient Huevo in units
+ingredient AceiteDeOliva in milliliters density 0.92
+
+recipe TortaDeManzana serves 8 {
+    requires 300 Harina
+    requires 150 Manteca
+    requires 4 Huevo
+    step Mezclar uses 300 Harina, 150 Manteca takes 5 minutes { "Mezclar la harina con la manteca" }
+    step Batir uses 4 Huevo depends on Mezclar takes 3 minutes { "Agregar los huevos y batir" }
+    step Hornear depends on Batir takes 40 minutes { "Hornear la mezcla" }
+}
+
+substitute Manteca with AceiteDeOliva ratio 0.75
+
+menu Cumpleaños {
+    include TortaDeManzana scaled to 16 servings
+}
+
+generate shopping list for Cumpleaños</pre>
+<div class="cap"><b>Código 1</b>: ingredientes, receta con pasos dependientes, sustitución, menú y lista de compras.</div>
+<pre>ingredient Azucar in grams
+ingredient Huevo in units
+
+recipe Caramelo yields 200 grams {
+    requires 200 Azucar
+    step Derretir uses 200 Azucar { "Derretir el azucar a fuego lento" }
+}
+
+recipe Flan serves 6 {
+    requires 100 gram Caramelo
+    requires 4 Huevo
+    step Acaramelar uses 100 gram Caramelo { "Cubrir el molde con el caramelo" }
+    step Hornear uses 4 Huevo depends on Acaramelar takes 1 1/2 hours { "Hornear a baño maría" }
+}
+
+scale Flan to 12 servings</pre>
+<div class="cap"><b>Código 2</b>: receta usada como ingrediente (<code>yields</code>), cantidades con unidad propia y fracciones, y escalado.</div>
+
+<h3>Construcciones</h3>
+<table>
+<tr><th>Sentencia</th><th>Forma</th></tr>
+<tr><td>Ingrediente</td><td><code>ingredient &lt;Nombre&gt; in &lt;unidad&gt; [density &lt;n&gt;]</code></td></tr>
+<tr><td>Receta</td><td><code>recipe &lt;Nombre&gt; [serves &lt;n&gt;] [yields &lt;n&gt; &lt;unidad&gt;] { requires* step* }</code></td></tr>
+<tr><td>Requerimiento</td><td><code>requires &lt;n&gt; [&lt;unidad&gt;] &lt;Nombre&gt;</code></td></tr>
+<tr><td>Paso</td><td><code>step &lt;Nombre&gt; [uses &lt;n&gt; [&lt;unidad&gt;] &lt;Nombre&gt;, ...] [depends on &lt;Nombre&gt;, ...] [takes &lt;n&gt; minutes|hours] { "&lt;descripción&gt;" }</code></td></tr>
+<tr><td>Sustitución</td><td><code>substitute &lt;Nombre&gt; with &lt;Nombre&gt; ratio &lt;n&gt;</code></td></tr>
+<tr><td>Escalado</td><td><code>scale &lt;Receta&gt; to &lt;n&gt; servings</code></td></tr>
+<tr><td>Menú</td><td><code>menu &lt;Nombre&gt; { (include &lt;Receta&gt; scaled to &lt;n&gt; servings)* }</code></td></tr>
+<tr><td>Lista de compras</td><td><code>generate shopping list for &lt;Menú&gt;</code></td></tr>
+</table>
+<h3>Decisiones de diseño tomadas a partir de la devolución del Stage I</h3>
+<ul>
+<li><b>Red de dependencias en lugar de secuencia.</b> Cada <code>step</code> tiene nombre, declara qué ingredientes usa (<code>uses</code>) y de qué otros pasos depende (<code>depends on</code>). Así el compilador puede verificar el orden (el grafo debe ser acíclico) y que los pasos no usen en total más de lo requerido. Los pasos independientes pueden armar preparaciones separadas que luego se unen.</li>
+<li><b>Ingredientes como diccionario (ingrediente, cantidad).</b> Una receta es un conjunto de pares <code>requires</code>; un ingrediente no puede aparecer dos veces.</li>
+<li><b>Sin tipos genéricos, booleanos, operadores ni estructuras de control.</b> No había forma de crear variables de esos tipos ni un uso real para ellos, por lo que se quitaron. Las cantidades son un número con unidad, y la descripción de un paso es un texto propio de la construcción.</li>
+<li><b>Unidades de cocina.</b> Además de gramos, kilogramos, mililitros, litros y unidades, hay <code>cup</code>, <code>tablespoon</code>, <code>teaspoon</code> y <code>pinch</code>, y las cantidades admiten decimales, fracciones y números mixtos (<code>1/2 teaspoon</code>, <code>1 1/2 cup</code>). En un <code>requires</code> o <code>uses</code> se puede usar una unidad distinta de la del ingrediente (<code>requires 1 kilogram Harina</code>) y el compilador convierte.</li>
+<li><b>Sin <code>;</code>.</b> Las sentencias no se terminan con ningún símbolo, y las variables y su asignación desaparecieron: todo se referencia por nombre.</li>
+<li><b>Recetas como ingredientes.</b> Una receta que declara <code>yields</code> puede usarse en un <code>requires</code> o <code>uses</code>. Se usa la proporción pedida respecto de lo que rinde, y al escalar el menú se consolida hasta llegar a los ingredientes básicos. <code>serves</code> se usa para escalar a porciones y <code>yields</code> para usarla como ingrediente; una receta puede tener ambos.</li>
+</ul>
+
+<h1 id="s3">3. Implementación</h1>
+<h2 id="s3-1">3.1. Frontend</h2>
+<p>El analizador léxico (<code>FlexPatterns.l</code> y <code>FlexActions.c</code>) define el alfabeto Σ: palabras clave en minúscula, unidades (singular y plural), identificadores (letras con tilde o ñ en UTF-8, dígitos y <code>_</code>, sin empezar con dígito), números, descripciones entre comillas, <code>,</code>, <code>{</code> y <code>}</code>. Los comentarios y espacios se ignoran. Las fracciones (<code>1/2</code>) y los números mixtos (<code>1 1/2</code>) se reconocen como un único lexema y se emiten como un token <code>NUMBER</code> con su valor decimal, de modo que la gramática no distingue cómo se escribió el número; una fracción con denominador cero se rechaza en esa fase. Las duraciones <code>takes</code> en horas se guardan siempre en minutos.</p>
+<p>El analizador sintáctico (<code>BisonGrammar.y</code>) define N, Π y S. La gramática G = ⟨Σ, N, Π, S⟩ es libre de contexto, con S = <code>program</code>:</p>
+<pre class="g">program            → statement_list
+statement_list     → λ | statement_list statement
+statement          → ingredient_declaration | recipe_declaration | substitute_declaration
+                   | scale_statement | menu_declaration | generate_statement
+ingredient_declaration → INGREDIENT IDENT IN UNIT density_option
+density_option     → λ | DENSITY NUMBER
+recipe_declaration → RECIPE IDENT serves_option yields_option "{" requires_item_list step_list "}"
+serves_option      → λ | SERVES NUMBER
+yields_option      → λ | YIELDS NUMBER UNIT
+requires_item_list → λ | requires_item_list requires_item
+requires_item      → REQUIRES NUMBER unit_option IDENT
+unit_option        → λ | UNIT
+step_list          → λ | step_list step
+step               → STEP IDENT uses_option depends_option takes_option "{" STRING "}"
+uses_option        → λ | USES uses_item_list
+uses_item_list     → NUMBER unit_option IDENT | uses_item_list "," NUMBER unit_option IDENT
+depends_option     → λ | DEPENDS ON identifier_list
+identifier_list    → IDENT | identifier_list "," IDENT
+takes_option       → λ | TAKES NUMBER MINUTES | TAKES NUMBER HOURS
+substitute_declaration → SUBSTITUTE IDENT WITH IDENT RATIO NUMBER
+scale_statement    → SCALE IDENT TO NUMBER SERVINGS
+menu_declaration   → MENU IDENT "{" include_item_list "}"
+include_item_list  → λ | include_item_list include_item
+include_item       → INCLUDE IDENT SCALED TO NUMBER SERVINGS
+generate_statement → GENERATE SHOPPING LIST FOR IDENT</pre>
+<div class="cap"><b>Código 3</b>: producciones de la gramática (los terminales en mayúscula son los tokens; <code>λ</code> es la producción vacía).</div>
+<p>Las listas se encadenan en el AST (<code>AbstractSyntaxTree.h</code>): un <code>Program</code> tiene una lista de <code>Statement</code> (unión etiquetada por tipo de sentencia); una receta tiene listas de <code>RequiresItem</code> y <code>StepDeclaration</code>, y cada paso tiene listas de <code>UseItem</code> y de nombres de los que depende. Para poder informar errores semánticos con su línea, los nodos <code>Statement</code>, <code>RequiresItem</code>, <code>StepDeclaration</code> e <code>IncludeItem</code> guardan la línea donde empiezan (se toma de <code>@1.first_line</code> en las acciones de Bison). La gramática usa <code>%define parse.lac full</code>, por lo que los errores de sintaxis informan la línea y qué símbolos se esperaban (por ejemplo, <code>unexpected }, expecting description</code>).</p>
+
+<h2 id="s3-2">3.2. Backend</h2>
+<p>El backend (<code>src/main/c/backend</code>) tiene dos fases que se ejecutan solo si la anterior aceptó el programa.</p>
+<h3>Análisis semántico</h3>
+<p>Un solo recorrido del AST, en orden, arma la tabla de símbolos (<code>SymbolTable</code>) con los ingredientes, recetas, menús y reglas de sustitución ya declarados. Se exige que todo se declare antes de usarse, de modo que una referencia a un nombre no declarado y una referencia circular entre recetas se manifiestan del mismo modo (la receta todavía no existe). Los errores no detienen el análisis: se informan todos, con su línea. Las reglas son:</p>
+<ul>
+<li><b>Nombres:</b> ingredientes y recetas comparten un espacio de nombres (ambos pueden aparecer en un <code>requires</code>); los menús tienen el suyo. No se admiten repetidos.</li>
+<li><b>Cantidades:</b> <code>serves</code>, <code>yields</code>, <code>density</code>, <code>ratio</code>, <code>takes</code>, cada cantidad y cada cantidad de porciones deben ser mayores que cero.</li>
+<li><b>Unidades:</b> todas las unidades se llevan a una unidad base de su dimensión (gramo, mililitro, unidad) mediante un factor (taza = 240 ml, cucharada = 15 ml, cucharadita = 5 ml, pizca = 0,3125 ml, kilogramo y litro = 1000). Pasar de masa a volumen solo es posible si el ingrediente declara su <code>density</code> en g/ml. Las <code>unit</code> no se convierten a nada. Una receta usada como ingrediente solo admite unidades de la dimensión de su <code>yields</code>, porque no tiene densidad.</li>
+<li><b>Pasos:</b> nombres únicos dentro de la receta; <code>depends on</code> solo hacia pasos de la misma receta; el grafo debe ser acíclico (se ordena topológicamente con el algoritmo de Kahn (1962), y los pasos que no pueden ubicarse forman parte de, o dependen de, un ciclo); <code>uses</code> solo de ingredientes que la receta requiere; y la suma de lo que usan todos los pasos de un ingrediente, ya convertido a su unidad, no puede superar lo requerido.</li>
+<li><b>Sustituciones:</b> ambos deben ser ingredientes declarados y distintos, sin regla repetida y sin ciclos de ningún largo (se verifica si desde el reemplazo se alcanza al original). Si sus unidades son de distinta dimensión, alguno debe declarar <code>density</code>.</li>
+<li><b>Escalado, menús y listas:</b> la receta debe estar declarada y declarar <code>serves</code>; el menú debe estar declarado.</li>
+</ul>
+<h3>Generación de código</h3>
+<p>Para cada <code>scale</code> se genera un HTML con la receta escalada, y para cada <code>generate shopping list for M</code> un CSV con la lista de compras y un HTML con las recetas del menú escaladas. El factor de escala de una receta es <i>porciones pedidas / serves</i>.</p>
+<p>La <b>consolidación</b> se realiza en el compilador: cada receta del menú se expande a sus ingredientes básicos multiplicados por su factor. Si un <code>requires</code> nombra una receta, se expande recursivamente con el factor <i>cantidad pedida / yields</i>. Las cantidades de un mismo ingrediente se suman en la unidad con la que se lo declaró. La lista sale ordenada por nombre y las cantidades de <code>unit</code> se redondean hacia arriba, porque no se compra media unidad. Por cada <code>substitute</code> aplicable, la columna <code>alternativas</code> indica cuánto habría que comprar del sustituto: la cantidad multiplicada por el <code>ratio</code> y convertida a la unidad del sustituto. El <b>Código 4</b> muestra el CSV generado para el programa de prueba <code>output/01-spec-example</code>, donde 575 g de manteca por 0,75 equivalen a 431,25 g de aceite, es decir 468,75 ml con una densidad de 0,92 g/ml.</p>
+<pre>ingrediente,cantidad,unidad,alternativas
+Harina,1750,gramos,
+Huevo,10,unidades,
+Manteca,575,gramos,AceiteDeOliva: 468.75 mililitros</pre>
+<div class="cap"><b>Código 4</b>: lista de compras consolidada de un menú con dos recetas que comparten harina y manteca.</div>
+<p>El HTML de cada receta lista los ingredientes escalados y los pasos en orden de dependencia, con lo que usa cada uno, de cuáles depende y cuánto tarda. Al final informa el tiempo total de trabajo (suma de duraciones) y el tiempo mínimo si los pasos independientes se hacen en paralelo, que es la longitud del camino crítico de la red de dependencias. Los textos de salida están en español y los nombres se escapan para HTML.</p>
+<p>Uso: <code>Flex-Bison-Compiler [directorio-de-salida] &lt; programa</code>; por defecto se escribe en <code>out/</code>. El estado de salida es distinto de cero si alguna fase rechaza el programa.</p>
+
+<h2 id="s3-3">3.3. Adicionales</h2>
+<ul>
+<li>Mensajes de error con línea tanto en las fases léxica y sintáctica como en la semántica.</li>
+<li>Conjunto de pruebas automatizadas (<code>src/main/bash/test.sh</code>): 49 programas que se deben aceptar, 57 que se deben rechazar (sintácticos y semánticos) y 3 programas cuyos archivos de salida se comparan con los esperados. El script se ejecuta en el CI de GitHub Actions.</li>
+<li>Ejecución dentro de un contenedor de Docker (Ubuntu) para que la compilación sea reproducible, y el compilador se construye con AddressSanitizer para detectar errores de memoria.</li>
+</ul>
+
+<h2 id="s3-4">3.4. Dificultades Encontradas</h2>
+<ul>
+<li><b>Números mixtos y fracciones.</b> Un <code>1 1/2</code> podría leerse como dos números seguidos. Se resolvió en el analizador léxico con un patrón propio para los números mixtos, que emite un único token, para no ensuciar la gramática con ambigüedades.</li>
+<li><b>Errores léxicos y sintácticos encadenados.</b> Tras un carácter desconocido, una cadena sin cerrar o una fracción inválida, el parser seguía produciendo un segundo error engañoso. Ahora se marca el error léxico en el estado del compilador y se envía un fin de archivo al parser para que libere su pila.</li>
+<li><b>Ciclo de vida del AST.</b> Con parser en modo <i>push</i> y destructores de Bison, el árbol debe sobrevivir al parseo para que lo usen las fases siguientes; por eso la raíz (<code>program</code>) no tiene destructor y la libera el punto de entrada, después del backend.</li>
+<li><b>Conversión masa-volumen.</b> La especificación decía que se resolvía "a partir de su density" sin precisar de cuál. Se decidió usar la del ingrediente de destino si la tiene, y si no la del origen; si ninguno la declara, es un error semántico.</li>
+<li><b>Recetas como ingredientes.</b> Requirió agregar <code>yields</code> y definir que la receta se expande en proporción a lo pedido. Exigir la declaración previa evita tener que detectar ciclos entre recetas, ya que no pueden formarse.</li>
+<li><b>Pruebas existentes.</b> Al agregar el análisis semántico, 21 de los casos de aceptación del Stage II dejaron de aceptarse porque usaban nombres no declarados. Se reescribieron como programas válidos y se sumaron casos de rechazo semánticos.</li>
+<li><b>Herramientas locales.</b> En macOS, Bison es la versión 2.3, demasiado vieja para la gramática, por lo que la construcción y las pruebas se hacen siempre en el contenedor.</li>
+</ul>
+
+<h1 id="s4">4. Futuras Extensiones</h1>
+<ul>
+<li>Declaración de ingredientes después de su uso, con un análisis que detecte ciclos entre recetas.</li>
+<li>Cantidades "a gusto" (sin número) y unidades configurables por el usuario.</li>
+<li>Sustitución automática en la lista de compras ante la falta de un ingrediente (hoy solo se informa la alternativa).</li>
+<li>Otros formatos de salida (por ejemplo, PDF o Markdown) y una opción para elegir el idioma de los textos generados.</li>
+<li>Restricciones dietarias, costos por ingrediente y presupuesto del menú.</li>
+</ul>
+
+<h1 id="s5">5. Conclusiones</h1>
+<p>El lenguaje permite describir recetas una sola vez y derivar de ellas, de forma automática, las cantidades escaladas y una lista de compras consolidada, y el compilador rechaza programas inconsistentes (pasos en un orden imposible, pasos que usan más de lo requerido, sustituciones circulares, conversiones imposibles) antes de generar ningún archivo. Modelar los pasos como una red de dependencias, y no como una secuencia, fue la decisión que más valor agregó, porque le da al análisis semántico algo concreto para verificar.</p>
+<p>La estructura en fases (léxica, sintáctica, semántica y generación) facilitó extender el proyecto en cada etapa, y las pruebas unitarias por regla permitieron cambiar la gramática y agregar el backend sin perder la compatibilidad con lo ya hecho. Como contrapartida, el diseño inicial subestimó la complejidad de las unidades y de las recetas anidadas, que terminaron siendo la parte más rica del dominio.</p>
+
+<h1 id="s6">6. Referencias</h1>
+<ul>
+<li>Aho, A. V., Lam, M. S., Sethi, R. y Ullman, J. D. (2006). <i>Compilers: Principles, Techniques, and Tools</i> (2.ª ed.). Addison-Wesley. (Tabla de símbolos y análisis semántico.)</li>
+<li>Kahn, A. B. (1962). Topological sorting of large networks. <i>Communications of the ACM</i>, 5(11), 558&ndash;562. (Ordenamiento de los pasos de una receta.)</li>
+<li>Free Software Foundation. <i>GNU Bison Manual</i>. https://www.gnu.org/software/bison/manual/ (parser <i>push</i>, LAC y destructores.)</li>
+</ul>
+
+<h1 id="s7">7. Bibliografía</h1>
+<ul>
+<li>Levine, J. (2009). <i>flex &amp; bison</i>. O'Reilly Media.</li>
+<li>Cátedra de Autómatas, Teoría de Lenguajes y Compiladores (ITBA). Documentos <i>Modelo Computacional</i>, <i>Análisis Léxico</i>, <i>Análisis Sintáctico</i>, <i>Análisis Semántico</i>, <i>Generación de Código</i> y <i>Runtime</i>.</li>
+<li>Golmar, A. <i>Flex-Bison-Compiler</i>, proyecto base de la cátedra. https://github.com/agustin-golmar/Flex-Bison-Compiler</li>
+</ul>
+
+</body>
+</html>

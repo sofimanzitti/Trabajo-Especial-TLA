@@ -1,0 +1,4 @@
+recipe Torta {
+    step Mezclar depends on Hornear { "Mezclar" }
+    step Hornear depends on Mezclar { "Hornear" }
+}

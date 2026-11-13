@@ -1,0 +1,7 @@
+ingredient Harina in grams
+
+recipe Torta {
+    requires 300 Harina
+    step Mezclar uses 200 Harina { "Mezclar" }
+    step Amasar uses 200 Harina { "Amasar" }
+}

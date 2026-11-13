@@ -1,0 +1,9 @@
+ingredient Azucar in grams
+
+recipe Caramelo yields 200 grams {
+    requires 200 Azucar
+}
+
+recipe Flan {
+    requires 2 cups Caramelo
+}

@@ -1,3 +1,6 @@
+#include "backend/code-generation/CodeGeneration.h"
+#include "backend/semantic-analysis/SemanticAnalysis.h"
+#include "backend/semantic-analysis/SymbolTable.h"
 #include "frontend/Frontend.h"
 #include "frontend/lexical-analysis/FlexActions.h"
 #include "frontend/syntactic-analysis/AbstractSyntaxTree.h"
@@ -11,6 +14,9 @@
  * The main entry-point of the entire application. If you use "strtok" to
  * parse anything inside this project instead of using Flex and Bison, I will
  * find you, and I will kill you (Bryan Mills; "Taken", 2008).
+ *
+ * Usage: Flex-Bison-Compiler [output-directory] < program
+ * The artifacts are written in the output directory ("out" by default).
  */
 const int main(const int length, const char ** arguments) {
 	LexicalAnalyzer * lexicalAnalyzer = createLexicalAnalyzer();
@@ -26,18 +32,32 @@ const int main(const int length, const char ** arguments) {
 		initializeAbstractSyntaxTreeModule(),
 		initializeFlexActionsModule(lexicalAnalyzer, &compilerState),
 		initializeBisonActionsModule(&compilerState),
-		initializeFrontendModule(lexicalAnalyzer)
+		initializeFrontendModule(lexicalAnalyzer),
+		initializeSemanticAnalysisModule(),
+		initializeCodeGenerationModule()
 	};
 	CompilationStatus compilationStatus = executeSyntacticAnalysis();
 	Program * program = compilerState.abstractSyntaxtTree;
+	SymbolTable * symbolTable = createSymbolTable();
 	if (compilationStatus == SUCCEEDED) {
 		logDebugging(logger, "The syntactic-analysis phase accepts the input program.");
+		compilationStatus = executeSemanticAnalysis(program, symbolTable);
+		if (compilationStatus == SUCCEEDED) {
+			logDebugging(logger, "The semantic-analysis phase accepts the input program.");
+			const char * outputDirectory = (length > 1) ? arguments[1] : "out";
+			compilationStatus = executeCodeGeneration(program, symbolTable, outputDirectory);
+		}
+		else {
+			logError(logger, "The semantic-analysis phase rejects the input program.");
+			compilationStatus = FAILED;
+		}
 	}
 	else {
 		logError(logger, "The syntactic-analysis phase rejects the input program.");
 		compilationStatus = FAILED;
 	}
 	logDebugging(logger, "Releasing AST resources...");
+	destroySymbolTable(symbolTable);
 	destroyProgram(program);
 	for (int k = (sizeof(moduleDestructors)/sizeof(ModuleDestructor)) - 1; 0 <= k; --k) {
 		moduleDestructors[k]();

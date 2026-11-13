@@ -1,0 +1,6 @@
+recipe Caramelo yields 200 grams {
+}
+
+menu Postres {
+    include Caramelo scaled to 4 servings
+}

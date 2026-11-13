@@ -1,3 +1,10 @@
+ingredient Harina in grams
+ingredient Manteca in grams
+ingredient Chocolate in grams
+ingredient Nueces in grams
+ingredient AzucarImpalpable in grams
+ingredient Limon in units
+
 recipe Budin serves 8 {
     requires 250 Harina
     requires 150 Manteca

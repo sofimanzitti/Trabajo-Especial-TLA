@@ -1,0 +1,19 @@
+ingredient Harina in grams density 0.53
+ingredient Leche in milliliters density 1.03
+ingredient Huevo in units
+ingredient Banana in units
+
+recipe Panqueques serves 4 {
+    requires 1 1/2 cup Harina
+    requires 0.5 liter Leche
+    requires 5 Huevo
+    step Batir uses 1 cup Harina, 250 grams Leche, 5 Huevo { "Batir todo" }
+}
+
+substitute Huevo with Banana ratio 0.5
+
+menu Desayuno {
+    include Panqueques scaled to 5 servings
+}
+
+generate shopping list for Desayuno

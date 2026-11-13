@@ -1,3 +1,5 @@
+ingredient Harina in grams
+
 recipe Torta serves 8 {
     // primero los ingredientes
     requires 300 Harina // tamizada

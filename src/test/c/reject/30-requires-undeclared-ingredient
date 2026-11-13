@@ -1,0 +1,3 @@
+recipe Torta {
+    requires 300 Harina
+}

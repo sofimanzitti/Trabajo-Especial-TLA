@@ -1,3 +1,9 @@
+ingredient Harina in grams
+ingredient Manteca in grams
+
 recipe TortaDeManzana {
+    requires 300 Harina
+    requires 150 Manteca
+    step Pesar { "Pesar los ingredientes" }
     step Mezclar uses 300 Harina, 150 Manteca depends on Pesar takes 5 minutes { "Mezclar todo" }
 }

@@ -1,4 +1,8 @@
+ingredient Sal in pinches
+ingredient Pimienta in pinches
+
 recipe Salsa {
     requires 1 pinch Sal
+    requires 2 pinches Pimienta
     step Condimentar uses 2 pinches Pimienta { "Salpimentar" }
 }

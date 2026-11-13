@@ -131,12 +131,12 @@ statement_list: %empty											{ $$ = NULL; }
 	| statement_list statement									{ $$ = AppendStatementSemanticAction($1, $2); }
 	;
 
-statement: ingredient_declaration								{ $$ = $1; }
-	| recipe_declaration										{ $$ = $1; }
-	| substitute_declaration									{ $$ = $1; }
-	| scale_statement											{ $$ = $1; }
-	| menu_declaration											{ $$ = $1; }
-	| generate_statement										{ $$ = $1; }
+statement: ingredient_declaration								{ $$ = $1; $$->line = @1.first_line; }
+	| recipe_declaration										{ $$ = $1; $$->line = @1.first_line; }
+	| substitute_declaration									{ $$ = $1; $$->line = @1.first_line; }
+	| scale_statement											{ $$ = $1; $$->line = @1.first_line; }
+	| menu_declaration											{ $$ = $1; $$->line = @1.first_line; }
+	| generate_statement										{ $$ = $1; $$->line = @1.first_line; }
 	;
 
 ingredient_declaration: INGREDIENT IDENT IN UNIT density_option	{ $$ = IngredientDeclarationSemanticAction($2, $4, $5); }
@@ -162,7 +162,7 @@ requires_item_list: %empty										{ $$ = NULL; }
 	| requires_item_list requires_item							{ $$ = AppendRequiresItemSemanticAction($1, $2); }
 	;
 
-requires_item: REQUIRES NUMBER unit_option IDENT				{ $$ = RequiresItemSemanticAction($2, $3, $4); }
+requires_item: REQUIRES NUMBER unit_option IDENT				{ $$ = RequiresItemSemanticAction($2, $3, $4); $$->line = @1.first_line; }
 	;
 
 unit_option: %empty											{ $$ = NoUnitOptionSemanticAction(); }
@@ -174,7 +174,7 @@ step_list: %empty												{ $$ = NULL; }
 	;
 
 step: STEP IDENT uses_option depends_option takes_option OPEN_BRACE STRING CLOSE_BRACE
-																{ $$ = StepDeclarationSemanticAction($2, $3, $4, $5, $7); }
+																{ $$ = StepDeclarationSemanticAction($2, $3, $4, $5, $7); $$->line = @1.first_line; }
 	;
 
 uses_option: %empty											{ $$ = NULL; }
@@ -213,7 +213,7 @@ include_item_list: %empty										{ $$ = NULL; }
 	| include_item_list include_item							{ $$ = AppendIncludeItemSemanticAction($1, $2); }
 	;
 
-include_item: INCLUDE IDENT SCALED TO NUMBER SERVINGS			{ $$ = IncludeItemSemanticAction($2, $5); }
+include_item: INCLUDE IDENT SCALED TO NUMBER SERVINGS			{ $$ = IncludeItemSemanticAction($2, $5); $$->line = @1.first_line; }
 	;
 
 generate_statement: GENERATE SHOPPING LIST FOR IDENT			{ $$ = GenerateStatementSemanticAction($5); }

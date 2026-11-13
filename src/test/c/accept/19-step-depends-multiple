@@ -1,3 +1,5 @@
 recipe TortaDeManzana {
+    step Mezclar { "Mezclar" }
+    step Batir { "Batir" }
     step Union depends on Mezclar, Batir { "Unir todo" }
 }

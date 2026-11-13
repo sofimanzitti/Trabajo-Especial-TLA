@@ -1,0 +1,5 @@
+ingredient Harina in grams
+
+recipe Torta {
+    requires 0 Harina
+}

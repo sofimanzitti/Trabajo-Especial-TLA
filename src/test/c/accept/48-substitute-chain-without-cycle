@@ -1,0 +1,6 @@
+ingredient Manteca in grams
+ingredient Margarina in grams
+ingredient Aceite in grams
+
+substitute Manteca with Margarina ratio 1
+substitute Margarina with Aceite ratio 0.8

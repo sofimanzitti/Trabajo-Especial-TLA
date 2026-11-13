@@ -1,0 +1,6 @@
+ingredient Harina in grams
+
+recipe Torta {
+    requires 100 Harina
+    requires 200 Harina
+}

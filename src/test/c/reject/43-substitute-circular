@@ -1,0 +1,5 @@
+ingredient Manteca in grams
+ingredient Margarina in grams
+
+substitute Manteca with Margarina ratio 1
+substitute Margarina with Manteca ratio 1

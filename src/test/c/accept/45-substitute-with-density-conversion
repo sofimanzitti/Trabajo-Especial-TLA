@@ -1,0 +1,4 @@
+ingredient Manteca in grams
+ingredient AceiteDeOliva in milliliters density 0.92
+
+substitute Manteca with AceiteDeOliva ratio 0.75

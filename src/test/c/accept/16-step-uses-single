@@ -1,3 +1,6 @@
+ingredient Harina in grams
+
 recipe TortaDeManzana {
+    requires 300 Harina
     step Mezclar uses 300 Harina { "Mezclar todo" }
 }

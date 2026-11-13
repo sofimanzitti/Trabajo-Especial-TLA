@@ -76,6 +76,7 @@ struct RequiresItem {
 	bool hasUnit;
 	UnitKind unit;
 	char * ingredientName;
+	int line;
 	RequiresItem * next;
 };
 
@@ -94,12 +95,14 @@ struct StepDeclaration {
 	bool hasTakes;
 	double minutes;
 	char * description;
+	int line;
 	StepDeclaration * next;
 };
 
 struct IncludeItem {
 	char * recipeName;
 	double toServings;
+	int line;
 	IncludeItem * next;
 };
 
@@ -151,6 +154,7 @@ struct Statement {
 		SubstituteDeclaration substitute;
 	};
 	StatementType type;
+	int line;
 	Statement * next;
 };
 

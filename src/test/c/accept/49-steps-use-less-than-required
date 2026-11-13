@@ -1,0 +1,6 @@
+ingredient Harina in grams
+
+recipe Torta {
+    requires 1 kilogram Harina
+    step Mezclar uses 300 grams Harina { "Mezclar" }
+}
