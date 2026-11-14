@@ -1,4 +1,5 @@
 #include "FlexActions.h"
+#include <math.h>
 
 /* MODULE INTERNAL STATE */
 
@@ -64,6 +65,12 @@ static CompilationStatus _rejectToken(Token * token, const char * reason) {
 	return FAILED;
 }
 
+/** Largest accepted numeric literal; anything above would overflow later computations. */
+#define MAX_NUMBER 1e9
+
+/** Longest accepted identifier; names are used to build output file names. */
+#define MAX_IDENTIFIER_LENGTH 100
+
 /* PUBLIC FUNCTIONS */
 
 CompilationStatus EOFLexemeAction() {
@@ -95,6 +102,9 @@ CompilationStatus FractionLexemeAction() {
 		return _rejectToken(token, "fraction with zero denominator");
 	}
 	token->semanticValue->number = whole + numerator / denominator;
+	if (!isfinite(token->semanticValue->number) || token->semanticValue->number > MAX_NUMBER) {
+		return _rejectToken(token, "number too large");
+	}
 	CompilationStatus status = pushToken(_lexicalAnalyzer, token);
 	destroyToken(token);
 	return status;
@@ -102,6 +112,9 @@ CompilationStatus FractionLexemeAction() {
 
 CompilationStatus IdentifierLexemeAction() {
 	Token * token = createToken(_lexicalAnalyzer, IDENT);
+	if (token->length > MAX_IDENTIFIER_LENGTH) {
+		return _rejectToken(token, "identifier too long");
+	}
 	token->semanticValue->string = strdup(token->lexeme);
 	_logTokenAction(__FUNCTION__, token);
 	CompilationStatus status = pushToken(_lexicalAnalyzer, token);
@@ -126,9 +139,19 @@ CompilationStatus KeywordLexemeAction(TokenLabel label) {
 	return status;
 }
 
+/** A number glued to letters ("300Harina"): a separator is missing. */
+CompilationStatus MalformedNumberLexemeAction() {
+	Token * token = createToken(_lexicalAnalyzer, UNKNOWN);
+	_logTokenAction(__FUNCTION__, token);
+	return _rejectToken(token, "number immediately followed by letters (a space is missing)");
+}
+
 CompilationStatus NumberLexemeAction() {
 	Token * token = createToken(_lexicalAnalyzer, NUMBER);
 	token->semanticValue->number = atof(token->lexeme);
+	if (!isfinite(token->semanticValue->number) || token->semanticValue->number > MAX_NUMBER) {
+		return _rejectToken(token, "number too large");
+	}
 	_logTokenAction(__FUNCTION__, token);
 	CompilationStatus status = pushToken(_lexicalAnalyzer, token);
 	destroyToken(token);

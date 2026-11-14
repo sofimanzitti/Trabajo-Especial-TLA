@@ -44,7 +44,7 @@ size_t sortSteps(const RecipeDeclaration * recipe, size_t * total, StepDeclarati
 			}
 			bool ready = true;
 			for (size_t j = 0; j < count && ready; ++j) {
-				if (!placed[j] && _dependsOn(steps[k], steps[j]->name)) {
+				if (j != k && !placed[j] && _dependsOn(steps[k], steps[j]->name)) {
 					ready = false;
 				}
 			}

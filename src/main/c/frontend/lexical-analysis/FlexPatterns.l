@@ -19,6 +19,7 @@ extern CompilationStatus FractionLexemeAction();
 extern CompilationStatus IdentifierLexemeAction();
 extern CompilationStatus IgnoredLexemeAction();
 extern CompilationStatus KeywordLexemeAction(TokenLabel label);
+extern CompilationStatus MalformedNumberLexemeAction();
 extern CompilationStatus NumberLexemeAction();
 extern CompilationStatus StringLexemeAction();
 extern CompilationStatus UnitLexemeAction(UnitKind unit);
@@ -34,7 +35,7 @@ extern CompilationStatus UnterminatedStringLexemeAction();
  * @see https://westes.github.io/flex/manual/Patterns.html
  */
 digit				[[:digit:]]+
-utf8_character		[\xC2-\xDF][\x80-\xBF]|[\xE0-\xEF][\x80-\xBF]{2}|[\xF0-\xF4][\x80-\xBF]{3}
+utf8_character		\xC3[\x80-\x96\x98-\xB6\xB8-\xBF]|[\xC4-\xC5][\x80-\xBF]
 letter				[A-Za-z_]|{utf8_character}
 identifier			({letter})({letter}|[0-9])*
 number				{digit}(\.{digit})?
@@ -42,6 +43,7 @@ fraction			{digit}"/"{digit}
 mixed_number		{digit}[ \t]+{fraction}
 string				\"[^\"\n]*\"
 unterminated_string	\"[^\"\n]*
+glued_number		({mixed_number}|{fraction}|{number})({letter})({letter}|[0-9])*
 whitespace			[[:space:]]+
 
 %%
@@ -109,6 +111,7 @@ whitespace			[[:space:]]+
 "{"									{ return KeywordLexemeAction(OPEN_BRACE); }
 "}"									{ return KeywordLexemeAction(CLOSE_BRACE); }
 
+{glued_number}						{ return MalformedNumberLexemeAction(); }
 {number}							{ return NumberLexemeAction(); }
 {fraction}							{ return FractionLexemeAction(); }
 {mixed_number}						{ return FractionLexemeAction(); }

@@ -85,31 +85,45 @@ static int _compareNeeds(const void * left, const void * right) {
 	return strcmp(((const Need *) left)->ingredient->name, ((const Need *) right)->ingredient->name);
 }
 
-/** Formats with up to 2 decimals, without trailing zeros. */
+/**
+ * Formats with up to 2 decimals, without trailing zeros. Amounts smaller than
+ * 0.1 get extra decimals so that they never collapse into a misleading "0".
+ */
 static void _formatNumber(const double value, char * buffer, const size_t size) {
-	snprintf(buffer, size, "%.2f", value);
-	char * end = buffer + strlen(buffer);
-	while (end > buffer && *(end - 1) == '0') {
-		*--end = '\0';
+	int decimals = 2;
+	const double magnitude = fabs(value);
+	while (magnitude > 0 && magnitude * pow(10, decimals) < 10 && decimals < 9) {
+		++decimals;
 	}
-	if (end > buffer && *(end - 1) == '.') {
-		*(end - 1) = '\0';
+	snprintf(buffer, size, "%.*f", decimals, value);
+	if (strchr(buffer, '.') != NULL) {
+		char * end = buffer + strlen(buffer);
+		while (end > buffer && *(end - 1) == '0') {
+			*--end = '\0';
+		}
+		if (end > buffer && *(end - 1) == '.') {
+			*(end - 1) = '\0';
+		}
 	}
 	if (strcmp(buffer, "-0") == 0) {
 		strcpy(buffer, "0");
 	}
 }
 
+/** Minutes as "45 min", "2 h" or "1 h 30 min"; fractions of a minute are kept. */
 static void _formatMinutes(const double minutes, char * buffer, const size_t size) {
-	const long total = lround(minutes);
-	if (total >= 60 && total % 60 == 0) {
-		snprintf(buffer, size, "%ld h", total / 60);
+	const double hours = floor(minutes / 60.0 + 1e-9);
+	const double rest = minutes - hours * 60.0;
+	char number[24];
+	_formatNumber(rest, number, sizeof(number));
+	if (hours < 1) {
+		snprintf(buffer, size, "%s min", number);
 	}
-	else if (total >= 60) {
-		snprintf(buffer, size, "%ld h %ld min", total / 60, total % 60);
+	else if (strcmp(number, "0") == 0) {
+		snprintf(buffer, size, "%.0f h", hours);
 	}
 	else {
-		snprintf(buffer, size, "%ld min", total);
+		snprintf(buffer, size, "%.0f h %s min", hours, number);
 	}
 }
 
@@ -163,10 +177,14 @@ static double _purchasable(const double amount, const UnitKind unit) {
 	return (unitDimension(unit) == DIMENSION_COUNT) ? ceil(amount - 1e-6) : amount;
 }
 
-static void _writeAlternatives(FILE * file, const SymbolTable * table, const Need * need) {
+/** Only the substitutions declared before the "generate" statement apply to it. */
+static void _writeAlternatives(FILE * file, const SymbolTable * table, const Program * program, const Statement * generate, const Need * need) {
 	char alternatives[1024] = "";
-	for (size_t k = 0; k < table->substitutes.count; ++k) {
-		const SubstituteDeclaration * rule = &table->substitutes.items[k]->substitute;
+	for (const Statement * declaration = program->statements; declaration != generate; declaration = declaration->next) {
+		if (declaration->type != SUBSTITUTE_STATEMENT) {
+			continue;
+		}
+		const SubstituteDeclaration * rule = &declaration->substitute;
 		if (strcmp(rule->fromIngredient, need->ingredient->name) != 0) {
 			continue;
 		}
@@ -187,7 +205,7 @@ static void _writeAlternatives(FILE * file, const SymbolTable * table, const Nee
 	_writeCsvField(file, alternatives);
 }
 
-static bool _writeShoppingList(const SymbolTable * table, const MenuDeclaration * menu, const char * directory) {
+static bool _writeShoppingList(const SymbolTable * table, const Program * program, const Statement * generate, const MenuDeclaration * menu, const char * directory) {
 	Needs needs = {0};
 	for (const IncludeItem * include = menu->includes; include != NULL; include = include->next) {
 		const RecipeDeclaration * recipe = &findRecipe(table, include->recipeName)->recipe;
@@ -211,7 +229,7 @@ static bool _writeShoppingList(const SymbolTable * table, const MenuDeclaration 
 		_formatNumber(amount, number, sizeof(number));
 		_writeCsvField(file, need->ingredient->name);
 		fprintf(file, ",%s,%s,", number, unitDisplayName(need->ingredient->unit, amount));
-		_writeAlternatives(file, table, need);
+		_writeAlternatives(file, table, program, generate, need);
 		fputc('\n', file);
 	}
 	fclose(file);
@@ -260,17 +278,16 @@ static void _writeQuantity(FILE * file, const double amount, const UnitKind unit
 	fprintf(file, "%s %s", number, unitDisplayName(unit, amount));
 }
 
-/** Writes one recipe, multiplied by a factor, with its steps in dependency order. */
-static void _writeRecipe(FILE * file, const SymbolTable * table, const RecipeDeclaration * recipe, const double servings) {
-	const double factor = servings / recipe->serves;
-	char number[64];
+/**
+ * Writes one recipe multiplied by a factor, with its steps in dependency order,
+ * followed by the recipes it uses as ingredients (in the proportion needed).
+ */
+static void _writeRecipeBody(FILE * file, const SymbolTable * table, const RecipeDeclaration * recipe, const double factor, const char * meta) {
 	fputs("<h2>", file);
 	_writeHtmlEscaped(file, recipe->name);
-	fputs("</h2>\n<p class=\"meta\">Para ", file);
-	_formatServings(servings, number, sizeof(number));
-	fprintf(file, "%s %s (la receta original es para ", number, fabs(servings - 1.0) < EPSILON ? "porción" : "porciones");
-	_formatServings(recipe->serves, number, sizeof(number));
-	fprintf(file, "%s).</p>\n<h3>Ingredientes</h3>\n<ul>\n", number);
+	fputs("</h2>\n<p class=\"meta\">", file);
+	_writeHtmlEscaped(file, meta);
+	fputs("</p>\n<h3>Ingredientes</h3>\n<ul>\n", file);
 	for (const RequiresItem * item = recipe->requires; item != NULL; item = item->next) {
 		UnitKind unit = item->unit;
 		if (!item->hasUnit) {
@@ -336,6 +353,35 @@ static void _writeRecipe(FILE * file, const SymbolTable * table, const RecipeDec
 		}
 	}
 	free(ordered);
+
+	for (const RequiresItem * item = recipe->requires; item != NULL; item = item->next) {
+		const Statement * subRecipe = findRecipe(table, item->ingredientName);
+		if (subRecipe == NULL) {
+			continue;
+		}
+		double amount = 0;
+		resolveQuantity(table, item->ingredientName, item->amount, item->hasUnit, item->unit, &amount);
+		const double needed = amount * factor;
+		char neededText[64];
+		char yieldsText[64];
+		_formatNumber(needed, neededText, sizeof(neededText));
+		_formatNumber(subRecipe->recipe.yieldsAmount, yieldsText, sizeof(yieldsText));
+		char subMeta[512];
+		snprintf(subMeta, sizeof(subMeta), "Receta auxiliar de %s: se prepara la cantidad necesaria para obtener %s %s (la receta original rinde %s %s).",
+			recipe->name, neededText, unitDisplayName(subRecipe->recipe.yieldsUnit, needed), yieldsText, unitDisplayName(subRecipe->recipe.yieldsUnit, subRecipe->recipe.yieldsAmount));
+		_writeRecipeBody(file, table, &subRecipe->recipe, needed / subRecipe->recipe.yieldsAmount, subMeta);
+	}
+}
+
+/** Writes a recipe scaled to a number of servings. */
+static void _writeRecipe(FILE * file, const SymbolTable * table, const RecipeDeclaration * recipe, const double servings) {
+	char requested[64];
+	char original[64];
+	_formatServings(servings, requested, sizeof(requested));
+	_formatServings(recipe->serves, original, sizeof(original));
+	char meta[256];
+	snprintf(meta, sizeof(meta), "Para %s %s (la receta original es para %s).", requested, isSingularAmount(servings) ? "porción" : "porciones", original);
+	_writeRecipeBody(file, table, recipe, servings / recipe->serves, meta);
 }
 
 static bool _writeScaledRecipe(const SymbolTable * table, const ScaleStatement * scale, const char * directory) {
@@ -393,7 +439,7 @@ CompilationStatus executeCodeGeneration(const Program * program, const SymbolTab
 		}
 		else if (statement->type == GENERATE_STATEMENT) {
 			const MenuDeclaration * menu = &findMenu(table, statement->generate.menuName)->menu;
-			succeeded = _writeShoppingList(table, menu, outputDirectory) && succeeded;
+			succeeded = _writeShoppingList(table, program, statement, menu, outputDirectory) && succeeded;
 			succeeded = _writeMenuRecipes(table, menu, outputDirectory) && succeeded;
 		}
 	}

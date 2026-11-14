@@ -1,0 +1,10 @@
+ingredient Harina in grams
+ingredient Avena in grams
+recipe Pan serves 2 {
+    requires 100 Harina
+}
+menu M {
+    include Pan scaled to 2 servings
+}
+generate shopping list for M
+substitute Harina with Avena ratio 1

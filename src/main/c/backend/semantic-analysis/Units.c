@@ -40,8 +40,13 @@ double unitFactor(const UnitKind unit) {
 	}
 }
 
+bool isSingularAmount(const double amount) {
+	// Decided with the same rounding that is used to print the amount.
+	return fabs(round(amount * 100.0) / 100.0 - 1.0) < 1e-9;
+}
+
 const char * unitDisplayName(const UnitKind unit, const double amount) {
-	const bool singular = fabs(amount - 1.0) < 1e-9;
+	const bool singular = isSingularAmount(amount);
 	switch (unit) {
 		case UNIT_CUPS:
 			return singular ? "taza" : "tazas";

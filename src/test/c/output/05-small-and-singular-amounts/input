@@ -1,0 +1,29 @@
+ingredient Sal in grams
+ingredient Cafe in kilograms
+ingredient Leche in liters
+
+recipe Prueba serves 1 {
+    requires 0.001 Sal
+    requires 1.004 Cafe
+    requires 0.999 Leche
+    step Mezclar uses 0.001 Sal takes 0.4 minutes { "Mezclar" }
+    step Reposar depends on Mezclar takes 1 1/2 hours { "Dejar reposar" }
+}
+
+recipe Flan yields 200 grams {
+    requires 200 Sal
+    step Hacer uses 200 Sal { "Hacer el caramelo" }
+}
+
+recipe Postre serves 2 {
+    requires 100 gram Flan
+    step Armar uses 100 gram Flan { "Armar el postre" }
+}
+
+menu M {
+    include Prueba scaled to 1 servings
+    include Postre scaled to 4 servings
+}
+
+generate shopping list for M
+scale Prueba to 0.001 servings

@@ -20,7 +20,10 @@ UnitDimension unitDimension(const UnitKind unit);
 /** Factor that converts one unit into the base one of its dimension (g, ml, unit). */
 double unitFactor(const UnitKind unit);
 
-/** Spanish display name (e.g. "taza" or "tazas"), singular only when the amount is 1. */
+/** True if the amount, rounded to 2 decimals as it is printed, is exactly 1. */
+bool isSingularAmount(const double amount);
+
+/** Spanish display name (e.g. "taza" or "tazas"), singular only when the printed amount is 1. */
 const char * unitDisplayName(const UnitKind unit, const double amount);
 
 /**

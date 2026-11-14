@@ -69,6 +69,9 @@ static void _analyzeIngredient(SymbolTable * table, Statement * statement) {
 	if (ingredient->hasDensity && ingredient->density <= 0) {
 		REPORT(statement->line, "The density of '%s' must be greater than zero", ingredient->name);
 	}
+	if (ingredient->hasDensity && unitDimension(ingredient->unit) == DIMENSION_COUNT) {
+		logWarning(_logger, "Line %d: ingredient '%s' is measured in units, so its density is meaningless and will be ignored.", statement->line, ingredient->name);
+	}
 	addToStatementList(&table->ingredients, statement);
 }
 
@@ -291,8 +294,17 @@ static const RecipeDeclaration * _scalableRecipe(const SymbolTable * table, cons
 	return &recipe->recipe;
 }
 
-static void _analyzeScale(SymbolTable * table, Statement * statement) {
+static void _analyzeScale(SymbolTable * table, const Program * program, Statement * statement) {
 	_scalableRecipe(table, statement->scale.recipeName, statement->scale.toServings, statement->line, "scale");
+	// Each scale writes "<recipe>-<servings>-servings.html": a repeated one would overwrite the previous file.
+	for (const Statement * previous = program->statements; previous != statement; previous = previous->next) {
+		if (previous->type == SCALE_STATEMENT
+			&& strcmp(previous->scale.recipeName, statement->scale.recipeName) == 0
+			&& fabs(previous->scale.toServings - statement->scale.toServings) < 0.005) {
+			REPORT(statement->line, "scale: '%s' is already scaled to this number of servings (line %d)", statement->scale.recipeName, previous->line);
+			break;
+		}
+	}
 }
 
 static void _analyzeMenu(SymbolTable * table, Statement * statement) {
@@ -329,7 +341,7 @@ CompilationStatus executeSemanticAnalysis(const Program * program, SymbolTable *
 				_analyzeSubstitute(table, statement);
 				break;
 			case SCALE_STATEMENT:
-				_analyzeScale(table, statement);
+				_analyzeScale(table, program, statement);
 				break;
 			case MENU_STATEMENT:
 				_analyzeMenu(table, statement);

@@ -77,11 +77,11 @@ Cuando un programa se rechaza, el compilador muestra la línea y qué esperaba e
 
 ### Nombres
 
-Los nombres de ingredientes, recetas, pasos y menús pueden tener letras (también con tilde o ñ), números y `_`, pero no pueden empezar con un número ni tener espacios. Por ejemplo: `Azúcar`, `Cumpleaños`, `AceiteDeOliva`. Las palabras clave (`in`, `to`, `list`, `unit`, `cup`, etc.) no se pueden usar como nombres.
+Los nombres de ingredientes, recetas, pasos y menús pueden tener letras latinas (también con tilde o ñ), números y `_`, pero no pueden empezar con un número, tener espacios ni superar los 100 caracteres. Por ejemplo: `Azúcar`, `Cumpleaños`, `AceiteDeOliva`. Las palabras clave (`in`, `to`, `list`, `unit`, `cup`, etc.) no se pueden usar como nombres.
 
 ### Cantidades y unidades
 
-Las cantidades pueden ser enteros (`4`), decimales (`12.5`), fracciones (`1/2`) o números mixtos (`1 1/2`). Así, "media cucharadita" se escribe `1/2 teaspoon`. Una fracción con denominador `0` da error.
+Las cantidades pueden ser enteros (`4`), decimales (`12.5`), fracciones (`1/2`) o números mixtos (`1 1/2`). Así, "media cucharadita" se escribe `1/2 teaspoon`. Una fracción con denominador `0`, un número mayor que 1.000.000.000 o un número pegado a letras (`300Harina`) dan error.
 
 Las unidades son `gram`, `kilogram`, `milliliter`, `liter`, `cup`, `tablespoon`, `teaspoon`, `pinch` y `unit`, y se pueden escribir en singular o en plural. Por ahora no hay forma de escribir cantidades sin número, como "a gusto".
 
@@ -135,11 +135,11 @@ Todo se tiene que declarar antes de usarse (en el orden del archivo), así que u
 | Recetas como ingredientes | Tienen que declarar `yields`. |
 | `step` | Nombres únicos dentro de la receta, `depends on` solo de `step`s de esa receta, sin ciclos (ni de un `step` consigo mismo), y `uses` solo de lo que la receta `requires`. |
 | Totales | Lo que usan entre todos los `step`s de un ingrediente no puede superar lo que dice el `requires` (las unidades se convierten antes de sumar). Que sobre sí está permitido. |
-| `substitute` | Los dos tienen que ser ingredientes declarados y distintos, sin regla repetida y sin ciclos (de cualquier largo). Si tienen distinta dimensión, alguno de los dos tiene que declarar `density`. |
-| `scale` e `include` | La receta tiene que estar declarada y declarar `serves`. |
+| `substitute` | Solo se aplica a los `generate shopping list` que vienen después. Los dos tienen que ser ingredientes declarados y distintos, sin regla repetida y sin ciclos (de cualquier largo). Si tienen distinta dimensión, alguno de los dos tiene que declarar `density`. |
+| `scale` e `include` | La receta tiene que estar declarada y declarar `serves`. No se puede repetir un `scale` de la misma receta con la misma cantidad de porciones (escribiría el mismo archivo). |
 | `generate shopping list` | El menú tiene que estar declarado. |
 
-Si una receta tiene `step`s pero uno de sus `requires` no lo usa ningún `step`, el compilador avisa con un warning, pero no la rechaza.
+Si una receta tiene `step`s pero uno de sus `requires` no lo usa ningún `step`, el compilador avisa con un warning, pero no la rechaza. Lo mismo pasa con un `density` en un ingrediente medido en `unit`, que no tiene sentido.
 
 ## Artefactos generados
 
@@ -152,7 +152,7 @@ El compilador lee el programa por entrada estándar y escribe los archivos en un
 
 La lista de compras tiene las columnas `ingrediente,cantidad,unidad,alternativas`, ordenada por nombre. Cada cantidad está en la unidad con la que se declaró el ingrediente, y los ingredientes que se repiten entre recetas se suman. Si una receta se usa como ingrediente, se expande en proporción a lo que se pide respecto de lo que rinde y se suma al resto. Las cantidades de `unit` se redondean para arriba, porque no se compra media unidad. Si hay un `substitute` para un ingrediente, la columna `alternativas` indica cuánto habría que comprar del sustituto (ya multiplicado por el `ratio` y convertido a su unidad), por ejemplo `AceiteDeOliva: 468.75 mililitros`.
 
-Los archivos HTML muestran, además de los ingredientes y pasos escalados, el tiempo total de trabajo y el tiempo mínimo si los `step`s independientes se hacen en paralelo (el camino crítico del grafo de dependencias). Los textos de salida están en español.
+Los archivos HTML muestran, además de los ingredientes y pasos escalados (y, si la receta usa otras recetas como ingredientes, también esas recetas auxiliares en la proporción necesaria), el tiempo total de trabajo y el tiempo mínimo si los `step`s independientes se hacen en paralelo (el camino crítico del grafo de dependencias). Los textos de salida están en español.
 
 ## Requisitos
 

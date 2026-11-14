@@ -1,0 +1,4 @@
+ingredient Harina in grams
+recipe Pan serves 4 {
+    requires 300Harina
+}
