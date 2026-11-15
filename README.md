@@ -4,7 +4,7 @@
 
 Compilador de **recetas-lang**, un DSL para describir recetas de cocina y combinarlas en menús, escrito en C con Flex y Bison. Reconoce el lenguaje, construye su AST, valida que el programa tenga sentido en el dominio (análisis semántico) y genera los artefactos finales: una lista de compras consolidada en CSV y las recetas escaladas en HTML.
 
-Trabajo Especial de Autómatas, Teoría de Lenguajes y Compiladores (ITBA), grupo G-147: Sol Sommer, Sofía Manzitti, Morena Díaz Macchi y Lucas Crosta. La especificación del Stage I y el informe final del Stage III están en [`doc/`](doc), y la sintaxis vigente en la sección [Sintaxis](#sintaxis). Este repositorio está basado en la plantilla [Flex-Bison-Compiler](https://github.com/agustin-golmar/Flex-Bison-Compiler) de la cátedra.
+Trabajo Especial de Autómatas, Teoría de Lenguajes y Compiladores (ITBA), grupo G-147: Sol Sommer, Sofía Manzitti, Morena Díaz Macchi y Lucas Crosta. El informe final del Stage III está en [`doc/`](doc), y la sintaxis vigente en la sección [Sintaxis](#sintaxis). Este repositorio está basado en la plantilla [Flex-Bison-Compiler](https://github.com/agustin-golmar/Flex-Bison-Compiler) de la cátedra.
 
 * [Sobre el proyecto](#sobre-el-proyecto)
 * [Sintaxis](#sintaxis)
@@ -28,7 +28,7 @@ El compilador tiene tres fases:
 
 Si una fase rechaza el programa, las siguientes no se ejecutan y el compilador termina con estado distinto de `0`.
 
-La especificación que está en [`doc/`](doc) es la del Stage I (el informe final la actualiza). Después de la devolución cambiamos la sintaxis: sacamos los tipos genéricos, los operadores, las estructuras de control, el `;` al final y la asignación de variables, y los `step`s ahora tienen nombre y dependencias. La sintaxis actual es la de abajo.
+Respecto de la especificación del Stage I, después de la devolución cambiamos la sintaxis: sacamos los tipos genéricos, los operadores, las estructuras de control, el `;` al final y la asignación de variables, y los `step`s ahora tienen nombre y dependencias. La sintaxis actual es la de abajo.
 
 ## Sintaxis
 
