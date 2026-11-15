@@ -296,12 +296,17 @@ static const RecipeDeclaration * _scalableRecipe(const SymbolTable * table, cons
 
 static void _analyzeScale(SymbolTable * table, const Program * program, Statement * statement) {
 	_scalableRecipe(table, statement->scale.recipeName, statement->scale.toServings, statement->line, "scale");
-	// Each scale writes "<recipe>-<servings>-servings.html": a repeated one would overwrite the previous file.
+	// Each scale writes "<recipe>-<servings>-servings.html": compare the servings as they are printed.
+	char servings[64];
+	formatAmount(statement->scale.toServings, servings, sizeof(servings));
 	for (const Statement * previous = program->statements; previous != statement; previous = previous->next) {
-		if (previous->type == SCALE_STATEMENT
-			&& strcmp(previous->scale.recipeName, statement->scale.recipeName) == 0
-			&& fabs(previous->scale.toServings - statement->scale.toServings) < 0.005) {
-			REPORT(statement->line, "scale: '%s' is already scaled to this number of servings (line %d)", statement->scale.recipeName, previous->line);
+		if (previous->type != SCALE_STATEMENT || strcmp(previous->scale.recipeName, statement->scale.recipeName) != 0) {
+			continue;
+		}
+		char other[64];
+		formatAmount(previous->scale.toServings, other, sizeof(other));
+		if (strcmp(servings, other) == 0) {
+			REPORT(statement->line, "scale: '%s' is already scaled to %s servings (line %d)", statement->scale.recipeName, servings, previous->line);
 			break;
 		}
 	}

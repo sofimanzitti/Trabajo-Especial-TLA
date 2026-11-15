@@ -1,4 +1,5 @@
 #include "String.h"
+#include <stdbool.h>
 
 /* PRIVATE FUNCTIONS */
 
@@ -69,24 +70,26 @@ char * concatenate(const unsigned int count, ...) {
 	return string;
 }
 
+/** Control characters are the ones below 0x20 and DEL; bytes above 0x7F (UTF-8) are kept as they are. */
+static bool _isControl(const unsigned char character) {
+	return character < 0x20 || character == 0x7F;
+}
+
 char * escape(const char * string) {
 	unsigned int length = 1;
-	for (unsigned int k = 0; 0 < string[k]; ++k) {
-		if (iscntrl(string[k])) {
-			length += strlen(_controlCharacterToEscapedString(string[k]));
-		}
-		else {
-			length += 1;
-		}
+	for (unsigned int k = 0; string[k] != '\0'; ++k) {
+		const unsigned char character = (unsigned char) string[k];
+		length += _isControl(character) ? strlen(_controlCharacterToEscapedString((char) character)) : 1;
 	}
 	char * escapedString = calloc(length, sizeof(char));
 	char charToString[2] = { 0, 0 };
-	for (unsigned int k = 0; 0 < string[k]; ++k) {
-		if (iscntrl(string[k])) {
-			strcat(escapedString, _controlCharacterToEscapedString(string[k]));
+	for (unsigned int k = 0; string[k] != '\0'; ++k) {
+		const unsigned char character = (unsigned char) string[k];
+		if (_isControl(character)) {
+			strcat(escapedString, _controlCharacterToEscapedString((char) character));
 		}
 		else {
-			charToString[0] = string[k];
+			charToString[0] = (char) character;
 			strcat(escapedString, charToString);
 		}
 	}

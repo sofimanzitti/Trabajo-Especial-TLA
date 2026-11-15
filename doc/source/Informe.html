@@ -182,7 +182,7 @@ generate_statement → GENERATE SHOPPING LIST FOR IDENT</pre>
 <li><b>Unidades:</b> todas las unidades se llevan a una unidad base de su dimensión (gramo, mililitro, unidad) mediante un factor (taza = 240 ml, cucharada = 15 ml, cucharadita = 5 ml, pizca = 0,3125 ml, kilogramo y litro = 1000). Pasar de masa a volumen solo es posible si el ingrediente declara su <code>density</code> en g/ml. Las <code>unit</code> no se convierten a nada. Una receta usada como ingrediente solo admite unidades de la dimensión de su <code>yields</code>, porque no tiene densidad.</li>
 <li><b>Pasos:</b> nombres únicos dentro de la receta; <code>depends on</code> solo hacia pasos de la misma receta; el grafo debe ser acíclico (se ordena topológicamente por pasadas sucesivas: en cada una se ubica el primer paso pendiente cuyas dependencias ya están ubicadas, y los pasos que no pueden ubicarse forman parte de, o dependen de, un ciclo); <code>uses</code> solo de ingredientes que la receta requiere; y la suma de lo que usan todos los pasos de un ingrediente, ya convertido a su unidad, no puede superar lo requerido.</li>
 <li><b>Sustituciones:</b> ambos deben ser ingredientes declarados y distintos, sin regla repetida y sin ciclos de ningún largo (se verifica si desde el reemplazo se alcanza al original). Si sus unidades son de distinta dimensión, alguno debe declarar <code>density</code>.</li>
-<li><b>Escalado, menús y listas:</b> la receta debe estar declarada y declarar <code>serves</code>; el menú debe estar declarado. Dos <code>scale</code> de la misma receta a la misma cantidad de porciones se rechazan, porque escribirían el mismo archivo. Una densidad declarada sobre un ingrediente medido en <code>units</code> no tiene sentido y produce una advertencia.</li>
+<li><b>Escalado, menús y listas:</b> la receta debe estar declarada y declarar <code>serves</code>; el menú debe estar declarado. Dos <code>scale</code> de la misma receta cuyas porciones se escriben igual en el nombre del archivo (por ejemplo, 7.996 y 8.004, ambas “8”) se rechazan, porque escribirían el mismo archivo. Una densidad declarada sobre un ingrediente medido en <code>units</code> no tiene sentido y produce una advertencia.</li>
 </ul>
 <h3>Generación de código</h3>
 <p>Para cada <code>scale</code> se genera un HTML con la receta escalada, y para cada <code>generate shopping list for M</code> un CSV con la lista de compras y un HTML con las recetas del menú escaladas. El factor de escala de una receta es <i>porciones pedidas / serves</i>.</p>
@@ -198,7 +198,7 @@ Manteca,575,gramos,AceiteDeOliva: 468.75 mililitros</pre>
 <h2 id="s3-3">3.3. Adicionales</h2>
 <ul>
 <li>Mensajes de error con línea tanto en las fases léxica y sintáctica como en la semántica.</li>
-<li>Conjunto de pruebas automatizadas (<code>src/main/bash/test.sh</code>): 50 programas que se deben aceptar, 62 que se deben rechazar (léxicos, sintácticos y semánticos) y 5 programas cuyos archivos de salida se comparan con los esperados. El script se ejecuta en el CI de GitHub Actions.</li>
+<li>Conjunto de pruebas automatizadas (<code>src/main/bash/test.sh</code>): 52 programas que se deben aceptar, 63 que se deben rechazar (léxicos, sintácticos y semánticos) y 6 programas cuyos archivos de salida se comparan con los esperados. El script se ejecuta en el CI de GitHub Actions.</li>
 <li>Ejecución dentro de un contenedor de Docker (Ubuntu) para que la compilación sea reproducible, y el compilador se construye con AddressSanitizer para detectar errores de memoria.</li>
 </ul>
 

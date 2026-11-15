@@ -120,6 +120,7 @@ whitespace			[[:space:]]+
 {identifier}						{ return IdentifierLexemeAction(); }
 
 {whitespace}						{ return IgnoredLexemeAction(); }
+[\xC0-\xFF][\x80-\xBF]*					{ return UnknownLexemeAction(); }
 .									{ return UnknownLexemeAction(); }
 
 <<EOF>>								{ return EOFLexemeAction(); }

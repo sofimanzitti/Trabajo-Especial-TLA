@@ -1,0 +1,6 @@
+ingredient Harina in grams
+recipe Pan serves 4 {
+    requires 100 Harina
+}
+scale Pan to 7.996 servings
+scale Pan to 8.004 servings

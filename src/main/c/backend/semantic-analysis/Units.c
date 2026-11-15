@@ -1,5 +1,7 @@
 #include "Units.h"
 #include <math.h>
+#include <stdio.h>
+#include <string.h>
 
 UnitDimension unitDimension(const UnitKind unit) {
 	switch (unit) {
@@ -37,6 +39,27 @@ double unitFactor(const UnitKind unit) {
 		case UNIT_UNITS:
 		default:
 			return 1.0;
+	}
+}
+
+void formatAmount(const double value, char * buffer, const size_t size) {
+	int decimals = 2;
+	const double magnitude = fabs(value);
+	while (magnitude > 0 && magnitude * pow(10, decimals) < 10 && decimals < 9) {
+		++decimals;
+	}
+	snprintf(buffer, size, "%.*f", decimals, value);
+	if (strchr(buffer, '.') != NULL) {
+		char * end = buffer + strlen(buffer);
+		while (end > buffer && *(end - 1) == '0') {
+			*--end = '\0';
+		}
+		if (end > buffer && *(end - 1) == '.') {
+			*(end - 1) = '\0';
+		}
+	}
+	if (strcmp(buffer, "-0") == 0) {
+		strcpy(buffer, "0");
 	}
 }
 

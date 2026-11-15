@@ -85,37 +85,17 @@ static int _compareNeeds(const void * left, const void * right) {
 	return strcmp(((const Need *) left)->ingredient->name, ((const Need *) right)->ingredient->name);
 }
 
-/**
- * Formats with up to 2 decimals, without trailing zeros. Amounts smaller than
- * 0.1 get extra decimals so that they never collapse into a misleading "0".
- */
 static void _formatNumber(const double value, char * buffer, const size_t size) {
-	int decimals = 2;
-	const double magnitude = fabs(value);
-	while (magnitude > 0 && magnitude * pow(10, decimals) < 10 && decimals < 9) {
-		++decimals;
-	}
-	snprintf(buffer, size, "%.*f", decimals, value);
-	if (strchr(buffer, '.') != NULL) {
-		char * end = buffer + strlen(buffer);
-		while (end > buffer && *(end - 1) == '0') {
-			*--end = '\0';
-		}
-		if (end > buffer && *(end - 1) == '.') {
-			*(end - 1) = '\0';
-		}
-	}
-	if (strcmp(buffer, "-0") == 0) {
-		strcpy(buffer, "0");
-	}
+	formatAmount(value, buffer, size);
 }
 
 /** Minutes as "45 min", "2 h" or "1 h 30 min"; fractions of a minute are kept. */
 static void _formatMinutes(const double minutes, char * buffer, const size_t size) {
-	const double hours = floor(minutes / 60.0 + 1e-9);
-	const double rest = minutes - hours * 60.0;
+	// Rounded to the printed precision first, so 59.999 is "1 h" and not "60 min".
+	const double total = (minutes < 0.1) ? minutes : round(minutes * 100.0) / 100.0;
+	const double hours = floor(total / 60.0);
 	char number[24];
-	_formatNumber(rest, number, sizeof(number));
+	_formatNumber(total - hours * 60.0, number, sizeof(number));
 	if (hours < 1) {
 		snprintf(buffer, size, "%s min", number);
 	}

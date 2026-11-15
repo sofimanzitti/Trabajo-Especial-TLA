@@ -3,6 +3,7 @@
 
 #include "../../frontend/syntactic-analysis/AbstractSyntaxTree.h"
 #include <stdbool.h>
+#include <stddef.h>
 
 /**
  * Physical magnitude measured by a unit. Units of the same dimension are
@@ -19,6 +20,13 @@ UnitDimension unitDimension(const UnitKind unit);
 
 /** Factor that converts one unit into the base one of its dimension (g, ml, unit). */
 double unitFactor(const UnitKind unit);
+
+/**
+ * Formats an amount with up to 2 decimals, without trailing zeros. Amounts
+ * smaller than 0.1 get extra decimals so that they never collapse into "0".
+ * It is the only way amounts are printed, including in output file names.
+ */
+void formatAmount(const double value, char * buffer, const size_t size);
 
 /** True if the amount, rounded to 2 decimals as it is printed, is exactly 1. */
 bool isSingularAmount(const double amount);

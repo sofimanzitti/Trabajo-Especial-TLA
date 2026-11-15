@@ -112,7 +112,12 @@ CompilationStatus FractionLexemeAction() {
 
 CompilationStatus IdentifierLexemeAction() {
 	Token * token = createToken(_lexicalAnalyzer, IDENT);
-	if (token->length > MAX_IDENTIFIER_LENGTH) {
+	// Length in characters: UTF-8 continuation bytes (10xxxxxx) do not count.
+	unsigned int characters = 0;
+	for (const char * c = token->lexeme; *c != '\0'; ++c) {
+		characters += (((unsigned char) *c) & 0xC0) != 0x80;
+	}
+	if (characters > MAX_IDENTIFIER_LENGTH) {
 		return _rejectToken(token, "identifier too long");
 	}
 	token->semanticValue->string = strdup(token->lexeme);

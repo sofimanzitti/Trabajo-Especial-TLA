@@ -1,0 +1,9 @@
+ingredient Sal in grams
+
+recipe Prueba serves 1 {
+    requires 1 Sal
+    step Corto uses 1 Sal takes 59.999 minutes { "Paso casi de una hora" }
+    step Largo depends on Corto takes 119.999 minutes { "Paso casi de dos horas" }
+}
+
+scale Prueba to 1 servings

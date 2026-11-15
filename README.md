@@ -136,7 +136,7 @@ Todo se tiene que declarar antes de usarse (en el orden del archivo), así que u
 | `step` | Nombres únicos dentro de la receta, `depends on` solo de `step`s de esa receta, sin ciclos (ni de un `step` consigo mismo), y `uses` solo de lo que la receta `requires`. |
 | Totales | Lo que usan entre todos los `step`s de un ingrediente no puede superar lo que dice el `requires` (las unidades se convierten antes de sumar). Que sobre sí está permitido. |
 | `substitute` | Solo se aplica a los `generate shopping list` que vienen después. Los dos tienen que ser ingredientes declarados y distintos, sin regla repetida y sin ciclos (de cualquier largo). Si tienen distinta dimensión, alguno de los dos tiene que declarar `density`. |
-| `scale` e `include` | La receta tiene que estar declarada y declarar `serves`. No se puede repetir un `scale` de la misma receta con la misma cantidad de porciones (escribiría el mismo archivo). |
+| `scale` e `include` | La receta tiene que estar declarada y declarar `serves`. No se puede repetir un `scale` de la misma receta si las porciones se escriben igual en el nombre del archivo (por ejemplo, 7.996 y 8.004), porque escribiría el mismo archivo. |
 | `generate shopping list` | El menú tiene que estar declarado. |
 
 Si una receta tiene `step`s pero uno de sus `requires` no lo usa ningún `step`, el compilador avisa con un warning, pero no la rechaza. Lo mismo pasa con un `density` en un ingrediente medido en `unit`, que no tiene sentido.
