@@ -18,12 +18,6 @@ typedef struct {
 	 * syntactic-analyzer doesn't report a second (and misleading) one.
 	 */
 	bool hasLexicalError;
-
-	// TODO: Add a symbol table.
-	// TODO: Add an stack to handle nested scopes.
-	// TODO: Add more configuration.
-	// TODO: Add whatever you need.
-	// TODO: ...
 } CompilerState;
 
 #endif

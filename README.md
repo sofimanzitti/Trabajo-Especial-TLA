@@ -152,6 +152,8 @@ El compilador lee el programa por entrada estándar y escribe los archivos en un
 
 La lista de compras tiene las columnas `ingrediente,cantidad,unidad,alternativas`, ordenada por nombre. Cada cantidad está en la unidad con la que se declaró el ingrediente, y los ingredientes que se repiten entre recetas se suman. Si una receta se usa como ingrediente, se expande en proporción a lo que se pide respecto de lo que rinde y se suma al resto. Las cantidades de `unit` se redondean para arriba, porque no se compra media unidad. Si hay un `substitute` para un ingrediente, la columna `alternativas` indica cuánto habría que comprar del sustituto (ya multiplicado por el `ratio` y convertido a su unidad), por ejemplo `AceiteDeOliva: 468.75 mililitros`.
 
+El CSV está en UTF-8 sin BOM, separado por comas y con punto decimal. En una planilla configurada en español hay que importarlo indicando esas opciones (si no, puede abrirse en una sola columna o mostrar mal los acentos). Cada HTML lleva su CSS adentro, así que solo hace falta un navegador.
+
 Los archivos HTML muestran, además de los ingredientes y pasos escalados (y, si la receta usa otras recetas como ingredientes, también esas recetas auxiliares en la proporción necesaria), el tiempo total de trabajo y el tiempo mínimo si los `step`s independientes se hacen en paralelo (el camino crítico del grafo de dependencias). Los textos de salida están en español.
 
 ## Requisitos
